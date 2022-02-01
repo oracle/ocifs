@@ -25,8 +25,8 @@ df = pd.read_csv(
 ```
 ​
 ## Getting Started:
-```python
-pip install ocifs
+```bash
+python3 -m pip install ocifs
 ```
 
 ## Software Prerequisites:
