@@ -3,3 +3,4 @@ nbsphinx
 pandoc
 ipython
 sphinx_rtd_theme
+-e .
