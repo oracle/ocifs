@@ -31,7 +31,7 @@ with open_relative("README.md") as f:
 setup(
     name="ocifs",
     version=OCIFS_VERSION,
-    url="https://docs.oracle.com/en-us/iaas/tools/ocifs-sdk/latest/index.html#",
+    url="https://github.com/oracle/ocifs",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
