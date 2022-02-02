@@ -56,5 +56,5 @@ setup(
     project_urls={
         "Github": "https://github.com/oracle/ocifs",
         "Documentation": "https://ocifs.readthedocs.io/en/latest/",
-    }
+    },
 )
