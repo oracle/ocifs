@@ -53,4 +53,8 @@ setup(
     include_package_data=True,
     install_requires=[open("requirements.txt").read().strip().split("\n")],
     zip_safe=False,
+    project_urls={
+        "Github": "https://github.com/oracle/ocifs",
+        "Documentation": "https://ocifs.readthedocs.io/en/latest/",
+    }
 )
