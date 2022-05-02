@@ -23,6 +23,34 @@ You should also set up your configuration files, see the `SDK and CLI Configurat
 
 __ https://docs.cloud.oracle.com/Content/API/Concepts/sdkconfig.htm
 
+Running Tests
+=============
+The SDK uses `pytest` as its test framework. You can run tests against Python 3.6+ using the `tox` command. Note that this requires that you have those versions of Python installed,
+or you must pass `-e` or run tests directly:
+
+.. code-block:: sh
+
+    # This runs tests against all configured Pythons in tox.ini (3.6+). You must have those versions installed.
+    tox
+
+    # This runs tests against a specific Python version:
+    tox -e py36
+
+If you want to run an individual test, then run:
+
+.. code-block:: sh
+
+    python -m pytest ocifs/tests/test_spec.py::test_simple
+
+
+Specifying environment variables
+--------------------------------
+In addition to a valid config file for your tenancy, the tests also require the following environment
+variables to be set:
+
+    * ``OCIFS_TEST_NAMESPACE``: The namespace of a bucket in Object Storage to use for testing.
+    * ``OCIFS_TEST_BUCKET``: The bucket in Object Storage to use for testing.
+
 
 Checking Style
 ==============

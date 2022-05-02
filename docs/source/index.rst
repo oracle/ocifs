@@ -13,9 +13,9 @@ Installation
 ------------
 Install using pip:
 
-.. code-block:: python
+.. code-block:: bash
 
-   pip install ocifs
+   python3 -m pip install ocifs
 
 Overview
 ---------

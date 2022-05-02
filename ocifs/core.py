@@ -18,7 +18,7 @@ from oci.auth.signers import (
     get_resource_principals_signer,
     InstancePrincipalsSecurityTokenSigner,
 )
-from oci.config import DEFAULT_PROFILE, from_file
+from oci.config import DEFAULT_PROFILE, from_file, DEFAULT_LOCATION
 from oci.exceptions import ServiceError, ConfigFileNotFound
 from oci.object_storage import ObjectStorageClient
 from oci.object_storage.models import (
@@ -29,7 +29,6 @@ from oci.object_storage.models import (
 )
 from oci.pagination import list_call_get_all_results
 from oci._vendor.requests.structures import CaseInsensitiveDict
-from oci._vendor.requests.exceptions import HTTPError
 from .errors import translate_oci_error
 
 logger = logging.getLogger("ocifs")
@@ -46,7 +45,7 @@ def setup_logging(level=0):
 
 
 setup_logging()
-IAM_POLICIES = {"api_key", "resource_principal", "instance_principal"}
+IAM_POLICIES = {"api_key", "resource_principal", "instance_principal", "unknown_signer"}
 
 
 def _get_valid_oci_detail_methods(func):
@@ -101,7 +100,7 @@ class OCIFileSystem(AbstractFileSystem):
         A signer from the OCI sdk. More info: oci.auth.signers
     profile : str
         The profile to use from the config (If the config is passed in)
-    iam_principal: str (None)
+    iam_type: str (None)
         The IAM Auth principal type to use.
         Values can be one of ["api_key", "resource_principal", "instance_principal"]
     region: str (None)
@@ -136,10 +135,10 @@ class OCIFileSystem(AbstractFileSystem):
 
     def __init__(
         self,
-        config: Union[dict, str, None] = dict(),
+        config: Union[dict, str, None] = None,
         signer: Union[AbstractBaseSigner, None] = None,
         profile: str = None,
-        iam_principal: str = None,
+        iam_type: str = None,
         region: str = None,
         default_block_size: int = None,
         default_cache_type: str = "bytes",
@@ -151,10 +150,10 @@ class OCIFileSystem(AbstractFileSystem):
         self.default_block_size = default_block_size or self.default_block_size
         self.oci_additional_kwargs = oci_additional_kwargs or dict()
         self.config_kwargs = config_kwargs or dict()
-        self.config = config
+        self.config = config or dict()
         self._signer = signer
         self.profile = profile
-        self._iam_principal = iam_principal
+        self._iam_type = iam_type
         self.oci_client = None
         self.region = region
         self.default_tenancy = None
@@ -230,18 +229,10 @@ class OCIFileSystem(AbstractFileSystem):
         if refresh is False:
             return self.oci_client
 
-        if self._signer is not None:
-            self.config_kwargs["signer"] = self._signer
-        elif not self.config:
-            if self._iam_principal is None:
-                self._determine_iam_auth()
-            else:
-                self._get_iam_auth()
-        else:
-            self._set_up_api_key()
+        self._determine_iam_auth()
 
         logger.info(
-            f"Object Storage Client is being set up using {self._iam_principal} principal."
+            f"Object Storage Client is being set up using IAM type: {self._iam_type}."
         )
         self._update_service_endpoint()
         try:
@@ -766,7 +757,7 @@ class OCIFileSystem(AbstractFileSystem):
 
     def _get_region(self, **kwargs):
         region = self.region or self.kwargs.get("region")
-        if self._iam_principal == "resource_principal":
+        if self._iam_type == "resource_principal":
             region = os.environ.get("OCI_RESOURCE_PRINCIPAL_REGION") or literal_eval(
                 os.environ.get("OCI_REGION_METADATA") or "{}"
             ).get("regionIdentifier")
@@ -782,7 +773,7 @@ class OCIFileSystem(AbstractFileSystem):
     def _get_default_tenancy(self):
         tenancy = self.default_tenancy or self.kwargs.get("tenancy")
         if not tenancy:
-            if self._iam_principal == "resource_principal":
+            if self._iam_type == "resource_principal":
                 tenancy = os.environ.get("TENANCY_OCID")
             else:
                 namespace_name = self._get_default_namespace()
@@ -811,67 +802,56 @@ class OCIFileSystem(AbstractFileSystem):
             ] = f"https://objectstorage.{self.region}.oraclecloud.com"
 
     def _get_iam_auth(self):
-        assert (
-            self._iam_principal in IAM_POLICIES
-        ), f"Unrecognized IAM Prinicipal type: {self._iam_principal}"
-        return getattr(self, f"_set_up_{self._iam_principal}")
+        assert self._iam_type in IAM_POLICIES, (
+            "Unrecognized IAM Prinicipal type passed into `iam_type` arg: "
+            f"{self._iam_type}. Please select a valid arg from: {IAM_POLICIES}."
+        )
+        return getattr(self, f"_set_up_{self._iam_type}")()
 
     def _determine_iam_auth(self):
-        try:  # pragma: no cover
-            self._set_up_resource_principal()
-        except OSError as e:  # pragma: no cover
-            try:
-                self._set_up_instance_principal()
-            except HTTPError as ee:
-                raise ConfigFileNotFound(
-                    f"No config file was passed in, failed to create a signer for "
-                    f"Resource Principal with error: {e}. Instance Principal setup "
-                    f"also failed with error: {ee}"
-                )
+        # This get complicated quickly. Essentially the flow is:
+        # If the user has passed in a signer explicitly, use it
+        # If the user has passed in a config explicitly, use it
+        # otherwise check global variables, attempt resource principal, then throw error
+        if not self._iam_type:
+            if self._signer:
+                self._iam_type = "unknown_signer"
+            elif self.config:
+                self._iam_type = "api_key"
+            elif os.environ.get("OCIFS_IAM_TYPE"):
+                self._iam_type = os.environ["OCIFS_IAM_TYPE"]
+            else:
+                try:  # pragma: no cover
+                    self._iam_type = "resource_principal"
+                    self._set_up_resource_principal()
+                except OSError as e:  # pragma: no cover
+                    raise ConfigFileNotFound(
+                        "No iam_type was given, no signer was given, no config file was"
+                        " given, OCIFS_IAM_TYPE environment variable not found, and failed "
+                        f"to create a Resource Principal signer with error: {e}."
+                    )
+        self._get_iam_auth()
 
     def _set_up_resource_principal(self):
         self.config_kwargs["signer"] = get_resource_principals_signer()
-        self._iam_principal = "resource_principal"
 
     def _set_up_instance_principal(self):
         self.config_kwargs["signer"] = InstancePrincipalsSecurityTokenSigner()
-        self._iam_principal = "instance_principal"
 
     def _set_up_api_key(self):
-        if self.config is None:
-            raise ConfigFileNotFound(
-                "No config file found, API Key authentication failed."
-            )
+        if not self.config:
+            self.config = os.environ.get("OCIFS_CONFIG_LOCATION", DEFAULT_LOCATION)
         if isinstance(self.config, str):
             config_path = self.config
             if self.profile is None:
-                self.profile = DEFAULT_PROFILE
-                logger.info(
-                    f'No profile was specified, so we used "{self.profile}". If that is '
-                    f"incorrect, please re-call and specify profile=<your-profile>"
-                )
-            try:  # pragma: no cover
-                self.config = from_file(
-                    file_location=config_path, profile_name=self.profile
-                )
-                # self.region = config["region"]
-                # self.default_tenancy = config["tenancy"]
-            except Exception as e:
-                logger.error(
-                    f"Attempting to use creating a config object from the file path: "
-                    f"{config_path} and profile: {self.profile}. Config can be passed in "
-                    f"directly as a return object from oci.config.from_file, and "
-                    f"profile can be passed into config_kwargs."
-                )
-                raise e
-        logger.info(
-            "Object Storage Client is being set up using a config file. If you "
-            "experience any issues finding your data, please double check with your "
-            "policy administrator that your API Key policies are set up. If you call again "
-            "without explicitly passing in a config, you will use Resource Principal "
-            "or Instance Principal policies by default, if configured."
-        )
-        self._iam_principal = "api_key"
+                self.profile = os.environ.get("OCIFS_CONFIG_PROFILE", DEFAULT_PROFILE)
+                logger.info(f"No profile specified, using: {self.profile}.")
+            self.config = from_file(
+                file_location=config_path, profile_name=self.profile
+            )
+
+    def _set_up_unknown_signer(self):
+        self.config_kwargs["signer"] = self._signer
 
     def _open(
         self,
@@ -908,8 +888,8 @@ class OCIFileSystem(AbstractFileSystem):
         path = _build_full_path(bucket=bucket, namespace=namespace, key=key, **kwargs)
         block_size = block_size or self.default_block_size
         cache_type = cache_type or self.default_cache_type
-        assert mode in {"r", "w", "rb", "wb"}, ValueError(
-            "Mode must be one of 'r', 'w', 'rb', or 'wb'"
+        assert mode in {"r", "w", "rb", "wb", "a", "ab"}, ValueError(
+            "Mode must be one of 'r', 'w', 'rb', 'wb', 'a', 'ab'"
         )
         return OCIFile(
             oci_fs=self,
@@ -960,11 +940,12 @@ class OCIFile(AbstractBufferedFile):
         self,
         oci_fs: OCIFileSystem,
         path: str,
-        mode: str,
+        mode: str = "rb",
         block_size: int = MINIMUM_BLOCK_SIZE,
         autocommit: bool = True,
         cache_type: str = "bytes",
         cache_options: dict = None,
+        additional_kwargs: dict = None,
         **kwargs,
     ):
         self.bucket, self.namespace, self.key = oci_fs.split_path(path)
@@ -982,6 +963,7 @@ class OCIFile(AbstractBufferedFile):
             **kwargs,
         )
 
+        self.additional_kwargs = additional_kwargs or dict()
         self.mpu = None
         self.parts = None
 
@@ -990,6 +972,24 @@ class OCIFile(AbstractBufferedFile):
                 raise ValueError(
                     f"Block size must be >={self.MINIMUM_BLOCK_SIZE / (2 ** 20)}MB"
                 )
+
+        # when not using autocommit we want to have transactional state to manage
+        self.append_block = False
+        if "a" in mode and self.fs.exists(path):
+            head = self.fs._call_oci(
+                self.fs.oci_client.head_object,
+                namespace_name=self.namespace,
+                bucket_name=self.bucket,
+                object_name=self.key,
+            ).headers
+
+            loc = int(head.pop("Content-Length"))
+            self.write(self.fs.cat(self.path))
+            logger.info("'ab' and 'a' are experimental modes for large files.")
+            self.loc = loc
+
+            # Reflect head
+            self.additional_kwargs.update(head)
 
     def _fetch_range(self, start, end, max_attempts=10, **kwargs):
         """Download a block of data
