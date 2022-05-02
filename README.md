@@ -33,7 +33,9 @@ python3 -m pip install ocifs
 Python >= 3.6
 
 ## Documentation:
-[ocifs Documentation](https://docs.oracle.com/en-us/iaas/tools/ocifs-sdk/latest/index.html)
+[ocifs Documentation](https://ocifs.readthedocs.io/en/latest/index.html)
+[![PyPI](https://img.shields.io/pypi/v/ocifs.svg)](https://pypi.org/project/ocifs/)
+[ocifs GitHub](https://github.com/oracle/ocifs)
 
 ## Support
 ​
