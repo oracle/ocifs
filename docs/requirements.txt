@@ -3,4 +3,5 @@ nbsphinx
 pandoc
 ipython
 sphinx_rtd_theme
--e .
+autodoc
+sphinxcontrib-napoleon

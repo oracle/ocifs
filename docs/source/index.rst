@@ -177,7 +177,9 @@ Contents
    getting-started.ipynb
    getting-connected.ipynb
    unix-operations.ipynb
-   :maxdepth: 2
+   modules.rst
+   faqs_title.rst
+   :maxdepth: 4
 
 
 Indices and tables

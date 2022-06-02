@@ -84,10 +84,11 @@ def _build_full_path(bucket, namespace, key=None, **kwargs):
 
 
 class OCIFileSystem(AbstractFileSystem):
-    """
-    Access oci as if it were a file system.
+    """Access oci as if it were a file system.
+
     This exposes a filesystem-like API (ls, cp, open, etc.) on top of oci
-    storage.
+    object storage.
+
     Parameters
     ----------
     config : Union[dict, str, None]
@@ -96,35 +97,30 @@ class OCIFileSystem(AbstractFileSystem):
         If a str, it should be the location of the config file
         If None, user should have a Resource Principal configured environment
         If Resource Principal is not available, Instance Principal
-    signer : oci.auth.signer object
+    signer : oci.auth.signer
         A signer from the OCI sdk. More info: oci.auth.signers
     profile : str
         The profile to use from the config (If the config is passed in)
-    iam_type: str (None)
+    iam_type : str (None)
         The IAM Auth principal type to use.
         Values can be one of ["api_key", "resource_principal", "instance_principal"]
-    region: str (None)
+    region : str (None)
         The Region Identifier that the client should connnect to.
         Regions can be found here:
         https://docs.oracle.com/en-us/iaas/Content/General/Concepts/regions.htm
-    default_block_size: int (None)
+    default_block_size : int (None)
         If given, the default block size value used for ``open()``, if no
         specific value is given at all time. The built-in default is 5MB.
-    config_kwargs : dict of parameters passed to the OCI Client upon connection
+    config_kwargs : dict
+        dict of parameters passed to the OCI Client upon connection
         more info here: oci.object_storage.ObjectStorageClient.__init__
-    oci_additional_kwargs : dict of parameters that are used when calling oci api
+    oci_additional_kwargs : dict
+        dict of parameters that are used when calling oci api
         methods. Typically used for things like "retry_strategy".
-    kwargs : other parameters for oci session
+    kwargs : dict
+        dict of other parameters for oci session
         This includes default parameters for tenancy, namespace, and region
         Any other parameters are passed along to AbstractFileSystem's init method.
-    Examples
-    --------
-    >>> fs = OCIFileSystem(config=config)  # doctest: +SKIP
-    >>> fs.ls('my-bucket@my-namespace/')  # doctest: +SKIP
-    ['my-file.txt']
-    >>> with fs.open('my-bucket@my-namespace/my-file.txt', mode='rb') as f:  # doctest: +SKIP
-    ...     print(f.read())  # doctest: +SKIP
-    b'Hello, world!'
     """
 
     root_marker = ""
@@ -142,6 +138,7 @@ class OCIFileSystem(AbstractFileSystem):
         region: str = None,
         default_block_size: int = None,
         default_cache_type: str = "bytes",
+        default_cache_options: dict = None,
         config_kwargs: dict = None,
         oci_additional_kwargs: dict = None,
         **kwargs,
@@ -160,6 +157,7 @@ class OCIFileSystem(AbstractFileSystem):
         self.default_namespace = None
         self.connect()
         super().__init__(**kwargs)
+        self.default_cache_options = default_cache_options
         self.default_cache_type = default_cache_type
 
     def _get_oci_method_kwargs(
@@ -193,11 +191,16 @@ class OCIFileSystem(AbstractFileSystem):
             method, is_detail_method=is_detail_method, *akwarglist, **kwargs
         )
         logger.info("CALL: %s - %s" % (method.__name__, additional_kwargs))
-        return method(**additional_kwargs)
+        try:
+            return method(**additional_kwargs)
+        except Exception as e:
+            if str(getattr(e, "code", "")) in ["401", "402", "403"]:
+                self.connect(refresh=True)
+                return method(**additional_kwargs)
+            raise e
 
     def split_path(self, path, **kwargs):
-        """
-        Normalise OCI path string into bucket and key.
+        """Normalise OCI path string into bucket and key.
         Parameters
         ----------
         path : string
@@ -216,14 +219,15 @@ class OCIFileSystem(AbstractFileSystem):
         return bucket, namespace, obj_path
 
     def connect(self, refresh=True):
-        """
-        Establish oci connection object.
+        """Establish oci connection object.
+
         Parameters
         ----------
         refresh : bool
             Whether to create new session/client, even if a previous one with
             the same parameters already exists. If False (default), an
             existing one will be used if possible.
+
         """
         logger.info("Setting up OCI Connection.")
         if refresh is False:
@@ -247,6 +251,14 @@ class OCIFileSystem(AbstractFileSystem):
         return self.oci_client
 
     def invalidate_cache(self, path=None):
+        """Deletes the filesystem cache.
+
+        Parameters
+        ----------
+        path : str (optional)
+            The directory from which to clear. If not specificed, deleted entire cache.
+
+        """
         if path is None:
             self.dircache.clear()
         else:
@@ -378,6 +390,7 @@ class OCIFileSystem(AbstractFileSystem):
 
     def ls(self, path: str, detail: bool = False, refresh: bool = False, **kwargs):
         """List single "directory" with or without details
+
         Parameters
         ----------
         path : string/bytes
@@ -389,6 +402,7 @@ class OCIFileSystem(AbstractFileSystem):
             if False, look in local cache for file details first
         kwargs : dict
             additional arguments passed on
+
         """
         bucket, namespace, key = self.split_path(path)
         path = _build_full_path(bucket=bucket, namespace=namespace, key=key, **kwargs)
@@ -406,7 +420,20 @@ class OCIFileSystem(AbstractFileSystem):
             return list(sorted(set([f["name"] for f in files])))
 
     def touch(self, path: str, truncate: bool = True, data=None, **kwargs):
-        """Create empty file or truncate"""
+        """Create empty file or truncate
+
+        Parameters
+        ----------
+        path : string/bytes
+            location at which to list files
+        truncate : bool (=True)
+            if True, delete the existing file, replace with empty file
+        data : bool
+            if provided, writes this content to the file
+        kwargs : dict
+            additional arguments passed on
+
+        """
         bucket, namespace, key = self.split_path(path)
         path = _build_full_path(bucket=bucket, namespace=namespace, key=key, **kwargs)
         assert isinstance(truncate, bool), "The truncate argument must be of type bool."
@@ -431,11 +458,12 @@ class OCIFileSystem(AbstractFileSystem):
         self.invalidate_cache(self._parent(path))
 
     def checksum(self, path, **kwargs):
-        """
-        Unique value for current version of file
+        """Unique value for current version of file
+
         If the checksum is the same from one moment to another, the contents
         are guaranteed to be the same. If the checksum changes, the contents
         *might* have changed.
+
         Parameters
         ----------
         path : string/bytes
@@ -448,11 +476,19 @@ class OCIFileSystem(AbstractFileSystem):
 
     def copy_basic(self, path1, path2, destination_region=None, **kwargs):
         """Copy file between locations on OCI
+
         Not allowed where the origin is >50GB
-        path1: (str) URI of source data
-        path2: (str) URI of destination data
-        destination_region: (str) the region you want path2 to be written in
+
+        Parameters
+        ----------
+        path1 : str
+            URI of source data
+        path2 : str
+            URI of destination data
+        destination_region : str
+            the region you want path2 to be written in
             (defaults region of your config)
+
         """
         bucket1, namespace1, key1 = self.split_path(path1)
         bucket2, namespace2, key2 = self.split_path(path2)
@@ -505,6 +541,19 @@ class OCIFileSystem(AbstractFileSystem):
         self.invalidate_cache(path2)
 
     def copy(self, path1, path2, destination_region=None, **kwargs):
+        """Copy file between locations on OCI
+
+        Parameters
+        ----------
+        path1 : str
+            URI of source data
+        path2 : str
+            URI of destination data
+        destination_region : str
+            the region you want path2 to be written in
+            (defaults region of your config)
+
+        """
         gb50 = 50 * 2 ** 30
         path1 = self._strip_protocol(path1)
         path1_info = self.info(path1)
@@ -521,6 +570,16 @@ class OCIFileSystem(AbstractFileSystem):
             raise e
 
     def info(self, path, **kwargs):
+        """Get metadata about a file from a head or list call.
+
+        Parameters
+        ----------
+        path : str
+            URI of the directory/file
+        kwargs : dict
+            additional args for OCI
+
+        """
         bucket, namespace, key = self.split_path(path)
         path = _build_full_path(bucket=bucket, namespace=namespace, key=key, **kwargs)
         generic_dir = CaseInsensitiveDict(
@@ -590,6 +649,16 @@ class OCIFileSystem(AbstractFileSystem):
         return ns_dict
 
     def metadata(self, path, **kwargs):
+        """Get metadata about a file from a head or list call.
+
+        Parameters
+        ----------
+        path : str
+            URI of the directory/file
+        kwargs : dict
+            additional args for OCI
+
+        """
         return self.info(path, **kwargs)
 
     def mkdir(
@@ -599,6 +668,21 @@ class OCIFileSystem(AbstractFileSystem):
         compartment_id: str = None,
         **kwargs,
     ):
+        """Make a new bucket or folder
+
+        Parameters
+        ----------
+        path : str
+            URI of the directory
+        create_parents : bool (=True)
+            If Ture, will create all nested dirs
+        compartment_id : str
+            If the compartment to create the bucket is different from the compartment of
+            your auth mechanism.
+        kwargs : dict
+            additional args for OCI
+
+        """
         path = self._strip_protocol(path).rstrip("/")
         bucket, namespace, key = self.split_path(path)
         path = _build_full_path(bucket=bucket, namespace=namespace, key=key, **kwargs)
@@ -685,15 +769,16 @@ class OCIFileSystem(AbstractFileSystem):
                 raise translate_oci_error(e) from e
 
     def rm(self, path, recursive=False, **kwargs):
-        """
-        Remove keys and/or bucket.
+        """Remove keys and/or bucket.
+
         Parameters
         ----------
-        path : string
+        path : str
             The location to remove.
         recursive : bool (True)
             Whether to remove also all entries below, i.e., which are returned
             by `walk()`.
+
         """
         bucket, namespace, key = self.split_path(path)
         path = _build_full_path(bucket=bucket, namespace=namespace, key=key, **kwargs)
@@ -853,16 +938,19 @@ class OCIFileSystem(AbstractFileSystem):
     def _set_up_unknown_signer(self):
         self.config_kwargs["signer"] = self._signer
 
-    def _open(
+    def open(
         self,
         path: str,
         mode: str = "rb",
         block_size: int = None,
+        cache_options: dict = None,
+        compression: str = None,
         cache_type: str = None,
         autocommit: bool = True,
         **kwargs,
     ):
         """Open a file for reading or writing
+
         Parameters
         ----------
         path: string
@@ -872,6 +960,12 @@ class OCIFileSystem(AbstractFileSystem):
             as they do for the built-in `open` function.
         block_size: int
             Size of data-node blocks if reading
+        cache_options : dict, optional
+            Extra arguments to pass through to the cache.
+        compression: string or None
+            If given, open file using compression codec. Can either be a compression
+            name (a key in ``fsspec.compression.compr``) or "infer" to guess the
+            compression from the filename suffix.
         cache_type: str
             Caching policy in read mode
             Valid types are: {"readahead", "none", "mmap", "bytes"}, default "readahead"
@@ -884,18 +978,68 @@ class OCIFileSystem(AbstractFileSystem):
             Additional parameters used for oci methods.  Typically used for
             ServerSideEncryption.
         """
+
+        return super().open(
+            path=path,
+            mode=mode,
+            block_size=block_size,
+            cache_options=cache_options,
+            compression=compression,
+            cache_type=cache_type,
+            autocommit=autocommit,
+            **kwargs,
+        )
+
+    def _open(
+        self,
+        path: str,
+        mode: str = "rb",
+        block_size: int = None,
+        autocommit: bool = True,
+        cache_options: dict = None,
+        cache_type: str = None,
+        **kwargs,
+    ):
+        """Open a file for reading or writing
+
+        Parameters
+        ----------
+        path: string
+            Path of file on oci
+        mode: string
+            One of 'r', 'w', 'rb', or 'wb'. These have the same meaning
+            as they do for the built-in `open` function.
+        block_size: int
+            Size of data-node blocks if reading
+        cache_options : dict, optional
+            Extra arguments to pass through to the cache.
+        cache_type: str
+            Caching policy in read mode
+            Valid types are: {"readahead", "none", "mmap", "bytes"}, default "readahead"
+        autocommit : bool
+            If True, the OCIFile will automatically commit the multipart upload when done
+        encoding : str
+            The encoding to use if opening the file in text mode. The platform's
+            default text encoding is used if not given.
+        kwargs: dict-like
+            Additional parameters used for oci methods.  Typically used for
+            ServerSideEncryption.
+        """
+
         bucket, namespace, key = self.split_path(path)
         path = _build_full_path(bucket=bucket, namespace=namespace, key=key, **kwargs)
         block_size = block_size or self.default_block_size
+        cache_options = cache_options or self.default_cache_options
         cache_type = cache_type or self.default_cache_type
         assert mode in {"r", "w", "rb", "wb", "a", "ab"}, ValueError(
             "Mode must be one of 'r', 'w', 'rb', 'wb', 'a', 'ab'"
         )
         return OCIFile(
-            oci_fs=self,
+            fs=self,
             path=path,
             mode=mode,
             block_size=block_size,
+            cache_options=cache_options,
             cache_type=cache_type,
             autocommit=autocommit,
             **kwargs,
@@ -909,27 +1053,32 @@ class OCIFileSystem(AbstractFileSystem):
 
 
 class OCIFile(AbstractBufferedFile):
-    """
-    Open OCI key as a file. Data is only loaded and cached on demand.
+    """Open OCI URI as a file.
+
+    This imitates the native python file object. Data is only loaded and cached on demand.
+
     Parameters
     ----------
-    ocifs : OCIFileSystem
-        connection to ocifs
-    namespace : string
-    bucket : string
-    key : string
-    mode : str
-        One of 'rb', 'wb'. These have the same meaning
-        as they do for the built-in `open` function.
-    block_size : int
-        read-ahead size for finding delimiters
-    Examples
-    --------
-    >>> with oci.open('my-bucket/my-file.txt', mode='rb') as f:  # doctest: +SKIP
-    ...     ...  # doctest: +SKIP
-    See Also
-    --------
-    OCIFileSystem.open: used to create ``OCIFile`` objects
+    fs: OCIFileSystem
+        instance of FileSystem
+    path: str
+        location in file-system
+    mode: str
+        Normal file modes. Currently only 'w', 'wb', 'r' or 'rb'.
+    block_size: int
+        Buffer size for reading or writing, 'default' for class default
+    autocommit: bool
+        Whether to write to final destination; may only impact what
+        happens when file is being closed.
+    cache_type: {"readahead", "none", "mmap", "bytes"}, default "readahead"
+        Caching policy in read mode. See the definitions in ``core``.
+    cache_options : dict
+        Additional options passed to the constructor for the cache specified
+        by `cache_type`.
+    size: int
+        If given and in read mode, suppressed having to look up the file size
+    kwargs:
+        Gets stored as self.kwargs
     """
 
     retries = 5
@@ -938,7 +1087,7 @@ class OCIFile(AbstractBufferedFile):
 
     def __init__(
         self,
-        oci_fs: OCIFileSystem,
+        fs: OCIFileSystem,
         path: str,
         mode: str = "rb",
         block_size: int = MINIMUM_BLOCK_SIZE,
@@ -946,20 +1095,22 @@ class OCIFile(AbstractBufferedFile):
         cache_type: str = "bytes",
         cache_options: dict = None,
         additional_kwargs: dict = None,
+        size: int = None,
         **kwargs,
     ):
-        self.bucket, self.namespace, self.key = oci_fs.split_path(path)
+        self.bucket, self.namespace, self.key = fs.split_path(path)
         if not self.key:
             raise ValueError("Attempt to open non key-like path: %s" % path)
 
         super().__init__(
-            oci_fs,
+            fs,
             path,
             mode,
             block_size,
             autocommit=autocommit,
             cache_type=cache_type,
             cache_options=cache_options,
+            size=size,
             **kwargs,
         )
 
