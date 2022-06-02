@@ -8,16 +8,17 @@ If you want to use the SDK with your own programs, see README.rst.
 
 Getting Started
 ===============
-Assuming that you have Python and `virtualenv` installed, set up your environment and install the required dependencies like this:
+Assuming that you have Python and `conda` installed, set up your environment and install the required dependencies like this:
 
 .. code-block:: sh
 
     git clone https://github.com/oracle/ocifs.git
     cd ocifs
-    virtualenv ocifs-env
-    . ocifs-env/bin/activate
+    conda create python=3.8 --name ocifs -y
+    conda activate ocifs
     python3 -m pip install -r requirements.txt
-    python3 -m pip install -e .
+    python3 -m pip install -r requirements-dev.txt
+    python3 -m pip install -r docs/requirements.txt
 
 You should also set up your configuration files, see the `SDK and CLI Configuration File`__.
 

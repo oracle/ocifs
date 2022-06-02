@@ -32,6 +32,18 @@ python3 -m pip install ocifs
 ## Software Prerequisites:
 Python >= 3.6
 
+## Environment Variables for Authentication:
+```bash
+export OCIFS_IAM_TYPE=api_key
+export OCIFS_CONFIG_LOCATION=~/.oci/config
+export OCIFS_CONFIG_PROFILE=DEFAULT
+```
+
+Note, if you are operating on OCI with an alternative valid signer, such as resource principal, instead set the following:
+```bash
+export OCIFS_IAM_TYPE=resource_principal
+```
+
 ## Documentation:
 [ocifs Documentation](https://ocifs.readthedocs.io/en/latest/index.html)
 [![PyPI](https://img.shields.io/pypi/v/ocifs.svg)](https://pypi.org/project/ocifs/)
