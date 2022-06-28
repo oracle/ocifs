@@ -28,6 +28,7 @@ from oci.object_storage.models import (
     CopyObjectDetails,
 )
 from oci.pagination import list_call_get_all_results
+from oci.retry import DEFAULT_RETRY_STRATEGY
 from oci._vendor.requests.structures import CaseInsensitiveDict
 from .errors import translate_oci_error
 
@@ -239,6 +240,8 @@ class OCIFileSystem(AbstractFileSystem):
             f"Object Storage Client is being set up using IAM type: {self._iam_type}."
         )
         self._update_service_endpoint()
+        self._update_retry_strategy()
+        self._refresh_signer()
         try:
             self.oci_client = ObjectStorageClient(self.config, **self.config_kwargs)
         except Exception as e:
@@ -937,6 +940,19 @@ class OCIFileSystem(AbstractFileSystem):
 
     def _set_up_unknown_signer(self):
         self.config_kwargs["signer"] = self._signer
+
+    def _update_retry_strategy(self):
+        if not self.config_kwargs.get("retry_strategy"):
+            self.config_kwargs["retry_strategy"] = DEFAULT_RETRY_STRATEGY
+
+    def _refresh_signer(self):
+        if self._iam_type in {
+            "resource_principal",
+            "instance_principal",
+            "unknown_signer",
+        }:
+            if hasattr(self.config_kwargs["signer"], "refresh_security_token"):
+                self.config_kwargs.get("signer").refresh_security_token()
 
     def open(
         self,
