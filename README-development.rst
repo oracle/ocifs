@@ -4,7 +4,7 @@ Development
 
 The target audience for this README is developers wanting to contribute to ocifs, Oracle
 Cloud Infrastructure (OCI) Object Storage implementation of fsspec's filesystem.
-If you want to use the SDK with your own programs, see README.rst.
+If you want to use the SDK with your own programs, see README.md.
 
 Getting Started
 ===============
