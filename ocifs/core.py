@@ -31,6 +31,8 @@ from oci.pagination import list_call_get_all_results
 from oci.retry import DEFAULT_RETRY_STRATEGY
 from oci._vendor.requests.structures import CaseInsensitiveDict
 from .errors import translate_oci_error
+from .utils import __version__
+
 
 logger = logging.getLogger("ocifs")
 
@@ -191,7 +193,7 @@ class OCIFileSystem(AbstractFileSystem):
         additional_kwargs = self._get_oci_method_kwargs(
             method, is_detail_method=is_detail_method, *akwarglist, **kwargs
         )
-        logger.info("CALL: %s - %s" % (method.__name__, additional_kwargs))
+        logger.debug("CALL: %s - %s" % (method.__name__, additional_kwargs))
         try:
             return method(**additional_kwargs)
         except Exception as e:
@@ -230,18 +232,19 @@ class OCIFileSystem(AbstractFileSystem):
             existing one will be used if possible.
 
         """
-        logger.info("Setting up OCI Connection.")
+        logger.debug("Setting up OCI Connection.")
         if refresh is False:
             return self.oci_client
 
         self._determine_iam_auth()
 
-        logger.info(
+        logger.debug(
             f"Object Storage Client is being set up using IAM type: {self._iam_type}."
         )
         self._update_service_endpoint()
         self._update_retry_strategy()
         self._refresh_signer()
+        self.config.update({"additional_user_agent": f"Oracle-ocifs/{__version__}"})
         try:
             self.oci_client = ObjectStorageClient(self.config, **self.config_kwargs)
         except Exception as e:
@@ -284,7 +287,7 @@ class OCIFileSystem(AbstractFileSystem):
                     fields=["tags"],
                     **kwargs,
                 )
-                logger.info("Get directory listing page for namespace %s" % namespace)
+                logger.debug("Get directory listing page for namespace %s" % namespace)
                 files = list_call_get_all_results(
                     self.oci_client.list_buckets, **relevant_kwargs
                 ).data
@@ -334,7 +337,7 @@ class OCIFileSystem(AbstractFileSystem):
                     ),
                     **kwargs,
                 )
-                logger.info("Get directory listing page for %s" % path)
+                logger.debug("Get directory listing page for %s" % path)
                 results = list_call_get_all_results(
                     self.oci_client.list_objects, **relevant_kwargs
                 ).data
@@ -703,7 +706,7 @@ class OCIFileSystem(AbstractFileSystem):
                     name=bucket,
                     **kwargs,
                 )
-                logger.info(
+                logger.debug(
                     f"Creating bucket: {bucket}, in namespace: {namespace}, in "
                     f"compartment_id: {comp_id}, and with kwargs: {kwargs}"
                 )
@@ -850,7 +853,7 @@ class OCIFileSystem(AbstractFileSystem):
                 os.environ.get("OCI_REGION_METADATA") or "{}"
             ).get("regionIdentifier")
 
-        logger.info(f"Using Region: {region}.")
+        logger.debug(f"Using Region: {region}.")
         if not region:
             raise ValueError(
                 "No region specified. Please set the 'region' parameter in the kwargs."
@@ -869,7 +872,7 @@ class OCIFileSystem(AbstractFileSystem):
                     namespace_name=namespace_name
                 ).data.default_swift_compartment_id
 
-        logger.info(
+        logger.debug(
             f"Using Tenancy: {tenancy}. If you wish to use a different tenancy, "
             "pass it in through the kwarg 'tenancy'"
         )
@@ -933,7 +936,7 @@ class OCIFileSystem(AbstractFileSystem):
             config_path = self.config
             if self.profile is None:
                 self.profile = os.environ.get("OCIFS_CONFIG_PROFILE", DEFAULT_PROFILE)
-                logger.info(f"No profile specified, using: {self.profile}.")
+                logger.debug(f"No profile specified, using: {self.profile}.")
             self.config = from_file(
                 file_location=config_path, profile_name=self.profile
             )
@@ -1152,7 +1155,7 @@ class OCIFile(AbstractBufferedFile):
 
             loc = int(head.pop("Content-Length"))
             self.write(self.fs.cat(self.path))
-            logger.info("'ab' and 'a' are experimental modes for large files.")
+            logger.debug("'ab' and 'a' are experimental modes for large files.")
             self.loc = loc
 
             # Reflect head
@@ -1166,7 +1169,7 @@ class OCIFile(AbstractBufferedFile):
         and then stream the output - if the data size is bigger than we
         requested, an exception is raised.
         """
-        logger.info(
+        logger.debug(
             "Fetch: %s@%s/%s, %s-%s", self.bucket, self.namespace, self.key, start, end
         )
         for i in range(max_attempts):
@@ -1189,7 +1192,7 @@ class OCIFile(AbstractBufferedFile):
             # only happens when closing small file, use on-shot PUT
             return
         self.parts = []
-        logger.info("Initiate upload for %s" % self)
+        logger.debug("Initiate upload for %s" % self)
         try:
             mpu_details = self.fs._call_oci(
                 CreateMultipartUploadDetails,
@@ -1209,7 +1212,7 @@ class OCIFile(AbstractBufferedFile):
 
     def _upload_chunk(self, final=False, **kwargs):
         bucket, namespace, key = self.fs.split_path(self.path)
-        logger.info(
+        logger.debug(
             "Upload for %s, final=%s, loc=%s, buffer loc=%s"
             % (self, final, self.loc, self.buffer.tell() if self.buffer else -1)
         )
@@ -1235,7 +1238,7 @@ class OCIFile(AbstractBufferedFile):
                     (data0, data1) = (remainder[:partition], remainder[partition:])
 
             part = len(self.parts) + 1
-            logger.info("Upload chunk %s, %s" % (self, part))
+            logger.debug("Upload chunk %s, %s" % (self, part))
 
             for attempt in range(self.retries + 1):
                 try:
@@ -1262,15 +1265,15 @@ class OCIFile(AbstractBufferedFile):
         return not final
 
     def commit(self, **kwargs):
-        logger.info("Commit %s" % self)
+        logger.debug("Commit %s" % self)
         if self.tell() == 0:
             if self.buffer is not None:
-                logger.info("Empty file committed %s" % self)
+                logger.debug("Empty file committed %s" % self)
                 self._abort_mpu()
                 self.fs.touch(self.path)
         elif not self.parts:
             if self.buffer is not None:
-                logger.info("One-shot upload of %s" % self)
+                logger.debug("One-shot upload of %s" % self)
                 self.buffer.seek(0)
                 data = self.buffer.read()
                 try:
@@ -1287,7 +1290,7 @@ class OCIFile(AbstractBufferedFile):
             else:
                 raise RuntimeError
         else:
-            logger.info("Complete multi-part upload for %s " % self)
+            logger.debug("Complete multi-part upload for %s " % self)
             try:
                 commit_details = self.fs._call_oci(
                     CommitMultipartUploadDetails,
