@@ -4,15 +4,9 @@
 
 from .core import OCIFileSystem
 from fsspec import register_implementation
-import json
-import os
 import sys
+from .utils import __version__
 
-__version__ = "UNKNOWN"
-with open(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".version.json")
-) as version_file:
-    __version__ = json.load(version_file)["version"]
 
 if sys.version_info.major < 3:
     raise ImportError("Python < 3 is unsupported.")

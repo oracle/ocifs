@@ -13,13 +13,34 @@ The [Oracle Cloud Infrastructure Object Storage](https://docs.oracle.com/en-us/i
 The `intake/filesystem_spec` project is used by [Pandas](https://pandas.pydata.org/), [Dask](https://dask.org/) and other data libraries in python, this package adds Oracle OCI Object Storage capabilties to these libraries.
 ​
 ## Example Usage:
+```python
+from ocifs import OCIFileSystem
+
+fs = OCIFilesystem("~/.oci/config")
+fs.ls("oci://<my_bucket>@<my_namespace>/<my_prefix>")
+# [<my_bucket>@<my_namespace>/<my_prefix>/obj1, <my_bucket>@<my_namespace>/<my_prefix>/obj2]
+
+fs.cat("oci://<my_bucket>@<my_namespace>/<my_prefix>/obj1")
+# b"Hello World"
+
+with fs.open("oci://<my_bucket>@<my_namespace>/<my_prefix>/obj3", 'w') as f:
+    f.write("Adding a third object.")
+
+fs.copy("oci://<my_bucket>@<my_namespace>/<my_prefix>/obj3", "oci://<my_bucket>@<my_namespace>/<my_prefix>/obj1")
+
+with fs.open("oci://<my_bucket>@<my_namespace>/<my_prefix>/obj1") as f:
+    print(f.read())
+# b"Adding a third object."
+```
+
+### Or Use With Pandas:
 ​
 ```python
 import pandas as pd
 import ocifs
 ​
 df = pd.read_csv(
-    "oci://my_bucket@my_namespace/myobject.csv",
+    "oci://my_bucket@my_namespace/my_object.csv",
     storage_options={"config": "~/.oci/config"},
 )
 ```
@@ -45,9 +66,9 @@ export OCIFS_IAM_TYPE=resource_principal
 ```
 
 ## Documentation:
-[ocifs Documentation](https://ocifs.readthedocs.io/en/latest/index.html)
-[![PyPI](https://img.shields.io/pypi/v/ocifs.svg)](https://pypi.org/project/ocifs/)
-[ocifs GitHub](https://github.com/oracle/ocifs)
+* [![PyPI](https://img.shields.io/pypi/v/ocifs.svg)](https://pypi.org/project/ocifs/)
+* [ocifs Documentation](https://ocifs.readthedocs.io/en/latest/index.html)
+* [ocifs GitHub](https://github.com/oracle/ocifs)
 
 ## Support
 ​
