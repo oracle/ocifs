@@ -30,3 +30,8 @@ Yes, pass this tenancy into the OCIFileSystem init method, and ensure your auth 
 **Can I set auth once and forget?**
 
 Yes, you can use environment variables: `OCIFS_IAM_TYPE`, `OCIFS_CONFIG_LOCATION`, `OCIFS_CONFIG_PROFILE`. Read more in the Getting Connected section.
+
+
+**Can I refresh the cache from pandas?**
+
+Yes, you can. Pass `storage_options = {"refresh": "True"}` into any pandas read method.
