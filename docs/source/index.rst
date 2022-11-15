@@ -179,6 +179,7 @@ Contents
    unix-operations.ipynb
    modules.rst
    faqs_title.rst
+   telemetry.rst
    :maxdepth: 4
 
 
