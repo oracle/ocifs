@@ -100,7 +100,7 @@ class OCIFileSystem(AbstractFileSystem):
         If a str, it should be the location of the config file
         If None, user should have a Resource Principal configured environment
         If Resource Principal is not available, Instance Principal
-    signer : oci.auth.signer
+    signer : oci.auth.signers
         A signer from the OCI sdk. More info: oci.auth.signers
     profile : str
         The profile to use from the config (If the config is passed in)
@@ -244,7 +244,9 @@ class OCIFileSystem(AbstractFileSystem):
         self._update_service_endpoint()
         self._update_retry_strategy()
         self._refresh_signer()
-        self.config.update({"additional_user_agent": f"Oracle-ocifs/{__version__}"})
+        self.config.update(
+            {"additional_user_agent": f"Oracle-ocifs/version={__version__}"}
+        )
         try:
             self.oci_client = ObjectStorageClient(self.config, **self.config_kwargs)
         except Exception as e:
@@ -940,6 +942,8 @@ class OCIFileSystem(AbstractFileSystem):
             self.config = from_file(
                 file_location=config_path, profile_name=self.profile
             )
+        elif isinstance(self.config, dict):
+            self.config = self.config.copy()
 
     def _set_up_unknown_signer(self):
         self.config_kwargs["signer"] = self._signer

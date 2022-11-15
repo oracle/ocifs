@@ -121,7 +121,7 @@ For example, two valid inputs to the ``config`` argument are: ``oci.config.from_
 and ``~/.oci/config``. Specify the profile using the ``profile`` argument: ``OCIFileSystem(config="~/.oci/config", profile='PROFILE')``.
 
 Alternatively a signer may be used to create an ``OCIFileSystem`` using the ``signer`` argument.
-A Resource Principal Signer can be created using ``oci.auth.signer.get_resource_principals_signer()``.
+A Resource Principal Signer can be created using ``oci.auth.signers.get_resource_principals_signer()``.
 An Instance Principal Signer can be created using ``oci.auth.signers.InstancePrincipalsSecurityTokenSigner()``
 If neither config nor signer is provided, ``OCIFileSystem`` will attempt to create a Resource Principal, then an Instance Principal.
 However, passing a signer directly is always preferred.
@@ -179,7 +179,6 @@ Contents
    unix-operations.ipynb
    modules.rst
    faqs_title.rst
-   telemetry.rst
    :maxdepth: 4
 
 
