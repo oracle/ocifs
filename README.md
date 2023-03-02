@@ -46,8 +46,16 @@ df = pd.read_csv(
 ```
 ​
 ## Getting Started:
+
+### Installation:
 ```bash
 python3 -m pip install ocifs
+```
+
+### Creating a Filesystem Instance:
+```bash
+from ocifs import OCIFileSystem
+fs = OCIFilesystem("~/.oci/config")
 ```
 
 ## Software Prerequisites:
