@@ -2,6 +2,9 @@
 Release Notes
 =============
 
+.. toctree::
+    :maxdepth: 2
+
 1.2.0
 -----
 Release date: March 24, 2023

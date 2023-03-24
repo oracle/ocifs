@@ -169,14 +169,16 @@ Contents
 ========
 
 .. toctree::
+   :hidden:
    :maxdepth: 4
+
    getting-started.ipynb
    getting-connected.ipynb
    unix-operations.ipynb
-   modules.rst
-   faqs_title.rst
-   telemetry.rst
-   release_notes.rst
+   modules
+   faqs_title
+   telemetry
+   release_notes
 
 
 Indices and tables

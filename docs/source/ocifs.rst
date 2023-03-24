@@ -1,6 +1,9 @@
 ocifs classes
 =============
 
+.. toctree::
+    :maxdepth: 2
+
 OCIFileSystem
 --------------
 
