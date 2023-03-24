@@ -1,5 +1,5 @@
 
-# Oracle Cloud Infrastructure Object Storage fsspec implementation
+## Oracle Cloud Infrastructure Object Storage fsspec implementation
 ​
 ​
 The [Oracle Cloud Infrastructure Object Storage](https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm) service is an internet-scale, high-performance storage platform that offers reliable and cost-efficient data durability. With Object Storage, you can safely and securely store or retrieve data directly from the internet or from within the cloud platform.
@@ -46,16 +46,8 @@ df = pd.read_csv(
 ```
 ​
 ## Getting Started:
-
-### Installation:
 ```bash
 python3 -m pip install ocifs
-```
-
-### Creating a Filesystem Instance:
-```bash
-from ocifs import OCIFileSystem
-fs = OCIFilesystem("~/.oci/config")
 ```
 
 ## Software Prerequisites:
@@ -81,18 +73,3 @@ export OCIFS_IAM_TYPE=resource_principal
 ## Support
 ​
 [The built-in filesystems in `fsspec`](https://filesystem-spec.readthedocs.io/en/latest/api.html#built-in-implementations) are maintained by the `intake` project team, where as `ocifs` is an external implementation (similar to `s3fs`, `gcsfs`, `adl/abfs`, and so on), which is maintained by Oracle.
-
-## Contributing
-
-This project welcomes contributions from the community. Before submitting a pull request, please [review our contribution guide](./CONTRIBUTING.md)
-
-## Security
-
-Please consult the [security guide](./SECURITY.md) for our responsible security vulnerability disclosure process
-
-## License
-
-Copyright (c) 2021 Oracle and/or its affiliates.
-
-Released under the Universal Permissive License v1.0 as shown at
-<https://oss.oracle.com/licenses/upl/>.
