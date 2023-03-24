@@ -1,11 +1,6 @@
 .. Copyright (c) 2021, 2022 Oracle and/or its affiliates.
 .. Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
-.. ocifs documentation master file, created by
-   sphinx-quickstart on Tue Mar 30 10:10:53 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 OCIFS
 =====
 
@@ -126,7 +121,7 @@ An Instance Principal Signer can be created using ``oci.auth.signers.InstancePri
 If neither config nor signer is provided, ``OCIFileSystem`` will attempt to create a Resource Principal, then an Instance Principal.
 However, passing a signer directly is always preferred.
 
-Learn more about using signers with `ocifs` in the Getting Connected tab, or learn more about `Resource Principal here`_.
+Learn more about using signers with ``ocifs`` in the Getting Connected tab, or learn more about `Resource Principal here`_.
 
 .. _oci: https://oracle-cloud-infrastructure-python-sdk.readthedocs.io/en/latest/index.html
 .. _Resource Principal here: https://oracle-cloud-infrastructure-python-sdk.readthedocs.io/en/latest/api/signing.html
@@ -174,13 +169,14 @@ Contents
 ========
 
 .. toctree::
+   :maxdepth: 4
    getting-started.ipynb
    getting-connected.ipynb
    unix-operations.ipynb
    modules.rst
    faqs_title.rst
    telemetry.rst
-   :maxdepth: 4
+   release_notes.rst
 
 
 Indices and tables

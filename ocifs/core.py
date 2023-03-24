@@ -1,5 +1,5 @@
 # coding: utf-8
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at
 # https://oss.oracle.com/licenses/upl/
 
@@ -129,7 +129,7 @@ class OCIFileSystem(AbstractFileSystem):
     root_marker = ""
     connect_timeout = 5
     read_timeout = 15
-    default_block_size = 5 * 2 ** 20
+    default_block_size = 5 * 2**20
     protocol = ["oci"]
 
     def __init__(
@@ -202,6 +202,81 @@ class OCIFileSystem(AbstractFileSystem):
                 return method(**additional_kwargs)
             raise e
 
+    def sync(self, src_dir, dest_dir, **kwargs):
+        """
+        `sync` wraps the functionality of the oci cli method by the same name: https://docs.oracle.com/en-us/iaas/tools/oci-cli/3.22.4/oci_cli_docs/cmdref/os/object/sync.html
+        `sync` specifically handles the case where one file is local and the other is remote. If both are local use `os.copy`, if both are remote use `OCIFileSystem.copy`
+
+        Parameters
+        ----------
+        src_dir: str
+            The source of the data you want to copy.
+            Either a local or oci object storage path.
+            If oci object storage path, you must include the oci:// prefix
+        dest_dir: str
+            The destination where you want to put the data.
+            Must be a local path if src_dir is an oci object storage path, and vice versa.
+            If oci object storage path, you must include the oci:// prefix
+        kwargs:
+            Any additional args you want to send to the sync method.
+            List of all args/kwargs here: https://docs.oracle.com/en-us/iaas/tools/oci-cli/3.22.4/oci_cli_docs/cmdref/os/object/sync.html
+        """
+        import subprocess
+        import pkg_resources
+
+        assert (
+            "oci-cli" in pkg_resources.working_set.by_key.keys()
+        ), "Must download oci-cli to use sync: https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm#Quickstart"
+
+        if self.is_local_path(src_dir):
+            if self.is_local_path(dest_dir):
+                raise ValueError(
+                    "Detected both src_dir and dest_dir as local paths. If both are local, please use `os.copy`. If one is remote, please specify by prefixing it with `oci://`"
+                )
+            bucket, namespace, obj_path = self.split_path(dest_dir)
+            return subprocess.run(
+                [
+                    "oci",
+                    "os",
+                    "object",
+                    "sync",
+                    "-bn",
+                    bucket,
+                    "-ns",
+                    namespace,
+                    "--prefix",
+                    obj_path,
+                    "--src-dir",
+                    src_dir,
+                ]
+            )
+        elif self.is_local_path(dest_dir):
+            bucket, namespace, obj_path = self.split_path(src_dir)
+            return subprocess.run(
+                [
+                    "oci",
+                    "os",
+                    "object",
+                    "sync",
+                    "-bn",
+                    bucket,
+                    "-ns",
+                    namespace,
+                    "--prefix",
+                    obj_path,
+                    "--dest-dir",
+                    dest_dir,
+                ]
+            )
+        else:
+            logger.warn(
+                "Detected both src_dir and dest_dir as object storage paths. Passing call to the `copy` method."
+            )
+            return self.copy(path1=src_dir, path2=dest_dir, **kwargs)
+
+    def is_local_path(self, path):
+        return path[:6] != "oci://"
+
     def split_path(self, path, **kwargs):
         """Normalise OCI path string into bucket and key.
         Parameters
@@ -247,6 +322,7 @@ class OCIFileSystem(AbstractFileSystem):
         self.config.update(
             {"additional_user_agent": f"Oracle-ocifs/version={__version__}"}
         )
+        self._get_region()
         try:
             self.oci_client = ObjectStorageClient(self.config, **self.config_kwargs)
         except Exception as e:
@@ -346,7 +422,10 @@ class OCIFileSystem(AbstractFileSystem):
 
                 formatted_files = []
                 for f in results.objects:
-                    new_key = "/".join([full_bucket_name, f.name])
+                    # ODSC-38899: phantom files get created, named the same as subdir
+                    if f.name.endswith("/") and f.size == 0:
+                        continue
+                    new_key = os.path.join(full_bucket_name, f.name)
                     formatted_files.append(
                         CaseInsensitiveDict(
                             {
@@ -364,7 +443,7 @@ class OCIFileSystem(AbstractFileSystem):
                     )
                 for p in results.prefixes:
                     folder_name = p[:-1] if p.endswith("/") else p
-                    full_folder_name = "/".join([full_bucket_name, folder_name])
+                    full_folder_name = os.path.join(full_bucket_name, folder_name)
                     formatted_files.append(
                         CaseInsensitiveDict(
                             {
@@ -562,7 +641,15 @@ class OCIFileSystem(AbstractFileSystem):
             (defaults region of your config)
 
         """
-        gb50 = 50 * 2 ** 30
+        gb50 = 50 * 2**30
+        # We xor the paths to see if one is local and the other oci:// prefixed. If so, forward to `sync`
+        if self.is_local_path(path1) != self.is_local_path(path2):
+            logger.info(
+                "Detected one of the input paths to ocifs `copy` as a local path. Forwarding call to `sync` method."
+            )
+            self.sync(
+                src_dir=path1, dest_dir=path2, region=destination_region, **kwargs
+            )
         path1 = self._strip_protocol(path1)
         path1_info = self.info(path1)
         size = path1_info.get("size", None)
@@ -850,17 +937,21 @@ class OCIFileSystem(AbstractFileSystem):
 
     def _get_region(self, **kwargs):
         region = self.region or self.kwargs.get("region")
-        if self._iam_type == "resource_principal":
-            region = os.environ.get("OCI_RESOURCE_PRINCIPAL_REGION") or literal_eval(
-                os.environ.get("OCI_REGION_METADATA") or "{}"
-            ).get("regionIdentifier")
-
-        logger.debug(f"Using Region: {region}.")
         if not region:
-            raise ValueError(
-                "No region specified. Please set the 'region' parameter in the kwargs."
-            )
-        self.region = region
+            if self._iam_type == "resource_principal":
+                region = os.environ.get(
+                    "OCI_RESOURCE_PRINCIPAL_REGION"
+                ) or literal_eval(os.environ.get("OCI_REGION_METADATA") or "{}").get(
+                    "regionIdentifier"
+                )
+            elif self._iam_type == "api_key":
+                region = self.config["region"]
+            if not region:
+                raise ValueError(
+                    "No region specified. Please set the 'region' parameter in the kwargs."
+                )
+            self.region = region
+        logger.debug(f"Using Region: {region}.")
         return region
 
     def _get_default_tenancy(self):
@@ -1105,8 +1196,8 @@ class OCIFile(AbstractBufferedFile):
     """
 
     retries = 5
-    MINIMUM_BLOCK_SIZE = 5 * 2 ** 20
-    MAXIMUM_BLOCK_SIZE = 5 * 2 ** 30
+    MINIMUM_BLOCK_SIZE = 5 * 2**20
+    MAXIMUM_BLOCK_SIZE = 5 * 2**30
 
     def __init__(
         self,
