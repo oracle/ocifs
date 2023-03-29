@@ -66,7 +66,7 @@ export OCIFS_IAM_TYPE=resource_principal
 ```
 
 ## Documentation:
-* [![PyPI](https://img.shields.io/pypi/v/ocifs.svg)](https://pypi.org/project/ocifs/)
+* [![PyPI](https://img.shields.io/pypi/v/ocifs.svg?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/ocifs/) [![Python](https://img.shields.io/pypi/pyversions/ocifs.svg?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/ocifs/)
 * [ocifs Documentation](https://ocifs.readthedocs.io/en/latest/index.html)
 * [ocifs GitHub](https://github.com/oracle/ocifs)
 
