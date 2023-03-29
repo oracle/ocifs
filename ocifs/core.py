@@ -588,12 +588,17 @@ class OCIFileSystem(AbstractFileSystem):
 
         # OCI SDK will throw an error if the kwarg is not expected, so we need to
         # explicitly grab them for now.
+        dest_region = destination_region or self.region
+        if not dest_region:
+            raise ValueError(
+                "No region specified. Please set the 'region' parameter in the kwargs."
+            )
         try:
             copy_src = self._call_oci(
                 CopyObjectDetails,
                 is_detail_method=True,
                 source_object_name=key1,
-                destination_region=destination_region or self._get_region(),
+                destination_region=dest_region,
                 destination_namespace=namespace2,
                 destination_bucket=bucket2,
                 destination_object_name=key2,
@@ -642,21 +647,22 @@ class OCIFileSystem(AbstractFileSystem):
 
         """
         gb50 = 50 * 2**30
+        dest_region = destination_region or self.region
+        if not dest_region:
+            raise ValueError(
+                "No region specified. Please set the 'region' parameter in the kwargs."
+            )
         # We xor the paths to see if one is local and the other oci:// prefixed. If so, forward to `sync`
         if self.is_local_path(path1) != self.is_local_path(path2):
             logger.info(
                 "Detected one of the input paths to ocifs `copy` as a local path. Forwarding call to `sync` method."
             )
-            self.sync(
-                src_dir=path1, dest_dir=path2, region=destination_region, **kwargs
-            )
+            self.sync(src_dir=path1, dest_dir=path2, region=dest_region, **kwargs)
         path1 = self._strip_protocol(path1)
         path1_info = self.info(path1)
         size = path1_info.get("size", None)
         try:
-            self.copy_basic(
-                path1, path2, destination_region=destination_region, **kwargs
-            )
+            self.copy_basic(path1, path2, destination_region=dest_region, **kwargs)
         except Exception as e:
             if size >= gb50:
                 raise NotImplementedError(
@@ -938,19 +944,16 @@ class OCIFileSystem(AbstractFileSystem):
     def _get_region(self, **kwargs):
         region = self.region or self.kwargs.get("region")
         if not region:
-            if self._iam_type == "resource_principal":
+            region = (
+                self.config.get("region") if isinstance(self.config, dict) else None
+            )
+            if not region and self._iam_type == "resource_principal":
                 region = os.environ.get(
                     "OCI_RESOURCE_PRINCIPAL_REGION"
                 ) or literal_eval(os.environ.get("OCI_REGION_METADATA") or "{}").get(
                     "regionIdentifier"
                 )
-            elif self._iam_type == "api_key":
-                region = self.config["region"]
-            if not region:
-                raise ValueError(
-                    "No region specified. Please set the 'region' parameter in the kwargs."
-                )
-            self.region = region
+        self.region = region
         logger.debug(f"Using Region: {region}.")
         return region
 

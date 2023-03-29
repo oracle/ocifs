@@ -5,6 +5,13 @@ Release Notes
 .. toctree::
     :maxdepth: 2
 
+1.2.1
+-----
+Release date: March 29, 2023
+
+* Patch issue with region parameter being required for unknown signers
+
+
 1.2.0
 -----
 Release date: March 24, 2023
