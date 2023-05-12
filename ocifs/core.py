@@ -204,6 +204,7 @@ class OCIFileSystem(AbstractFileSystem):
 
     def sync(self, src_dir, dest_dir, **kwargs):
         """
+        The `sync` method is a bulk copy where one location is local and the other is OCI Object Storage.
         `sync` wraps the functionality of the oci cli method by the same name: https://docs.oracle.com/en-us/iaas/tools/oci-cli/3.22.4/oci_cli_docs/cmdref/os/object/sync.html
         `sync` specifically handles the case where one file is local and the other is remote. If both are local use `os.copy`, if both are remote use `OCIFileSystem.copy`
 
