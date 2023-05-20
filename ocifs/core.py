@@ -13,10 +13,11 @@ from fsspec import AbstractFileSystem
 from fsspec.utils import tokenize, stringify_path
 from fsspec.spec import AbstractBufferedFile
 
-from oci.signer import AbstractBaseSigner
+from oci.signer import AbstractBaseSigner, load_private_key_from_file
 from oci.auth.signers import (
     get_resource_principals_signer,
-    InstancePrincipalsSecurityTokenSigner,
+    SecurityTokenSigner,
+    EphemeralResourcePrincipalSigner,
 )
 from oci.config import DEFAULT_PROFILE, from_file, DEFAULT_LOCATION
 from oci.exceptions import ServiceError, ConfigFileNotFound
@@ -48,7 +49,7 @@ def setup_logging(level=0):
 
 
 setup_logging()
-IAM_POLICIES = {"api_key", "resource_principal", "instance_principal", "unknown_signer"}
+IAM_POLICIES = {"api_key", "resource_principal", "instance_principal", "security_token", "unknown_signer"}
 
 
 def _get_valid_oci_detail_methods(func):
@@ -106,7 +107,7 @@ class OCIFileSystem(AbstractFileSystem):
         The profile to use from the config (If the config is passed in)
     iam_type : str (None)
         The IAM Auth principal type to use.
-        Values can be one of ["api_key", "resource_principal", "instance_principal"]
+        Values can be one of ["api_key", "resource_principal", "instance_principal", "security_token"]
     region : str (None)
         The Region Identifier that the client should connnect to.
         Regions can be found here:
@@ -137,6 +138,7 @@ class OCIFileSystem(AbstractFileSystem):
         config: Union[dict, str, None] = None,
         signer: Union[AbstractBaseSigner, None] = None,
         profile: str = None,
+        security_token_file: str = None,
         iam_type: str = None,
         region: str = None,
         default_block_size: int = None,
@@ -153,6 +155,7 @@ class OCIFileSystem(AbstractFileSystem):
         self.config = config or dict()
         self._signer = signer
         self.profile = profile
+        self.security_token_file = security_token_file
         self._iam_type = iam_type
         self.oci_client = None
         self.region = region
@@ -321,7 +324,7 @@ class OCIFileSystem(AbstractFileSystem):
         self._update_retry_strategy()
         self._refresh_signer()
         self.config.update(
-            {"additional_user_agent": f"Oracle-ocifs/version={__version__}"}
+            {"additional_user_agent": f"Oracle-ocifs/version={__version__}+{self._iam_type}"}
         )
         self._get_region()
         try:
@@ -989,6 +992,23 @@ class OCIFileSystem(AbstractFileSystem):
                 "service_endpoint"
             ] = f"https://objectstorage.{self.region}.oraclecloud.com"
 
+    def _get_profile(self):
+        if self.profile is None:
+            self.profile = os.environ.get("OCIFS_CONFIG_PROFILE", None) or os.environ.get("OCI_CLI_PROFILE", DEFAULT_PROFILE)
+            logger.debug(f"No profile specified, using: {self.profile}.")
+
+    def _get_config(self):
+        if not self.config:
+            self.config = os.environ.get("OCIFS_CONFIG_LOCATION", None) or os.environ.get("OCI_CLI_CONFIG_FILE", DEFAULT_LOCATION)
+        if isinstance(self.config, str):
+            config_path = self.config
+            self._get_profile()
+            self.config = from_file(
+                file_location=config_path, profile_name=self.profile
+            )
+        elif isinstance(self.config, dict):
+            self.config = self.config.copy()
+
     def _get_iam_auth(self):
         assert self._iam_type in IAM_POLICIES, (
             "Unrecognized IAM Prinicipal type passed into `iam_type` arg: "
@@ -1007,7 +1027,9 @@ class OCIFileSystem(AbstractFileSystem):
             elif self.config:
                 self._iam_type = "api_key"
             elif os.environ.get("OCIFS_IAM_TYPE"):
-                self._iam_type = os.environ["OCIFS_IAM_TYPE"]
+                self._iam_type = os.environ.get("OCIFS_IAM_TYPE")
+            elif os.environ.get("OCI_CLI_TYPE"):
+                self._iam_type = os.environ.get("OCI_CLI_TYPE")
             else:
                 try:  # pragma: no cover
                     self._iam_type = "resource_principal"
@@ -1026,19 +1048,21 @@ class OCIFileSystem(AbstractFileSystem):
     def _set_up_instance_principal(self):
         self.config_kwargs["signer"] = InstancePrincipalsSecurityTokenSigner()
 
+    def _set_up_security_token(self):
+        self._get_config()
+        token_file = self.security_token_file
+        if self.security_token_file is None:
+            token_file = os.environ.get("OCI_CLI_SECURITY_TOKEN_FILE")
+            if not token_file:
+                token_file = self.config['security_token_file']
+        token = None
+        with open(token_file, 'r') as f:
+            token = f.read()
+        private_key = load_private_key_from_file(self.config['key_file'])
+        self.config_kwargs["signer"] = SecurityTokenSigner(token, private_key) 
+
     def _set_up_api_key(self):
-        if not self.config:
-            self.config = os.environ.get("OCIFS_CONFIG_LOCATION", DEFAULT_LOCATION)
-        if isinstance(self.config, str):
-            config_path = self.config
-            if self.profile is None:
-                self.profile = os.environ.get("OCIFS_CONFIG_PROFILE", DEFAULT_PROFILE)
-                logger.debug(f"No profile specified, using: {self.profile}.")
-            self.config = from_file(
-                file_location=config_path, profile_name=self.profile
-            )
-        elif isinstance(self.config, dict):
-            self.config = self.config.copy()
+        self._get_config()
 
     def _set_up_unknown_signer(self):
         self.config_kwargs["signer"] = self._signer
@@ -1051,6 +1075,7 @@ class OCIFileSystem(AbstractFileSystem):
         if self._iam_type in {
             "resource_principal",
             "instance_principal",
+            "security_token",
             "unknown_signer",
         }:
             if hasattr(self.config_kwargs["signer"], "refresh_security_token"):
