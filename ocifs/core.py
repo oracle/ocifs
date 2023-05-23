@@ -49,7 +49,8 @@ def setup_logging(level=0):
 
 
 setup_logging()
-IAM_POLICIES = {"api_key", "resource_principal", "instance_principal", "security_token", "unknown_signer"}
+OCI_CLI_AUTH_TYPES = {"api_key", "resource_principal", "instance_principal", "security_token", "unknown_signer"}
+IAM_POLICIES = OCI_CLI_AUTH_TYPES + {"unknown_signer"}
 
 
 def _get_valid_oci_detail_methods(func):
@@ -232,6 +233,9 @@ class OCIFileSystem(AbstractFileSystem):
             "oci-cli" in pkg_resources.working_set.by_key.keys()
         ), "Must download oci-cli to use sync: https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm#Quickstart"
 
+        # TODO passthrough profile, config, and token settings
+        if self._iam_type not in OCI_CLI_AUTH_TYPES:
+            raise ValueError(f"Unknown Authentication type. Please create a new OCIFileSystem instance and set iam_type to one of the following valid options: {OCI_CLI_AUTH_TYPES}")
         if self.is_local_path(src_dir):
             if self.is_local_path(dest_dir):
                 raise ValueError(
@@ -252,6 +256,8 @@ class OCIFileSystem(AbstractFileSystem):
                     obj_path,
                     "--src-dir",
                     src_dir,
+                    "--auth",
+                    self._iam_type,
                 ]
             )
         elif self.is_local_path(dest_dir):
@@ -270,6 +276,8 @@ class OCIFileSystem(AbstractFileSystem):
                     obj_path,
                     "--dest-dir",
                     dest_dir,
+                    "--auth",
+                    self._iam_type,
                 ]
             )
         else:
