@@ -148,7 +148,7 @@ def expect_errno(expected_errno):
 
 
 def test_simple(fs):
-    data = b"a" * (10 * 2 ** 20)
+    data = b"a" * (10 * 2**20)
 
     with fs.open(a, "wb") as f:
         f.write(data)
@@ -160,12 +160,12 @@ def test_simple(fs):
 
 
 def test_security_token():
-    data = b"a" * (10 * 2 ** 20)
-    oci_fs = OCIFileSystem(profile=security_token_profile, iam_type="security_token")
+    data = b"a" * (10 * 2**20)
+    oci_fs = OCIFileSystem(profile=security_token_profile, auth="security_token")
 
     with oci_fs.open(a, "wb") as f:
         f.write(data)
-    
+
     with oci_fs.open(a, "rb") as f:
         out = f.read(len(data))
         assert len(data) == len(out)
@@ -174,7 +174,7 @@ def test_security_token():
 
 @pytest.mark.parametrize("default_cache_type", ["none", "bytes"])
 def test_default_cache_type(default_cache_type):
-    data = b"a" * (10 * 2 ** 20)
+    data = b"a" * (10 * 2**20)
     oci_fs = OCIFileSystem(config=config, default_cache_type=default_cache_type)
 
     with oci_fs.open(a, "wb") as f:
@@ -196,8 +196,8 @@ def test_append_mode(fs):
 
 
 def test_medium_append(fs):
-    data1 = b"a" * (10 * 2 ** 20)
-    data2 = b"b" * (10 * 2 ** 20)
+    data1 = b"a" * (10 * 2**20)
+    data2 = b"b" * (10 * 2**20)
 
     with fs.open(a, "wb") as f:
         f.write(data1)
@@ -212,8 +212,8 @@ def test_medium_append(fs):
 
 
 def test_large_append(fs):
-    data1 = b"a" * (2 ** 30)
-    data2 = b"b" * (2 ** 30)
+    data1 = b"a" * (2**30)
+    data2 = b"b" * (2**30)
 
     with fs.open(a, "wb") as f:
         f.write(data1)
@@ -889,7 +889,7 @@ def test_copy(fs):
 
 @pytest.mark.skip("takes a long time")
 def test_copy_large(fs):
-    data = b"abc" * 12 * 2 ** 20
+    data = b"abc" * 12 * 2**20
     foldername = full_test_bucket_name + "/test"
     fn = foldername + "/biggerfile"
     with fs.open(fn, "wb") as f:
@@ -1085,7 +1085,7 @@ def test_write_small(fs):
 @pytest.mark.skip("takes a long time")
 def test_write_large(fs):
     "flush() chunks buffer when processing large singular payload"
-    mb = 2 ** 20
+    mb = 2**20
     payload_size = int(2.5 * 5 * mb)
     payload = b"0" * payload_size
 
@@ -1104,7 +1104,7 @@ def test_write_large(fs):
 )
 def test_write_limit(fs):
     "flush() respects part_max when processing large singular payload"
-    mb = 2 ** 20
+    mb = 2**20
     block_size = 15 * mb
     part_max = 28 * mb
     payload_size = 44 * mb
@@ -1140,21 +1140,21 @@ def test_write_fails(fs):
 
 def test_write_blocks(fs):
     with fs.open(full_test_bucket_name + "/temp", "wb") as f:
-        f.write(b"a" * 2 * 2 ** 20)
-        assert f.buffer.tell() == 2 * 2 ** 20
+        f.write(b"a" * 2 * 2**20)
+        assert f.buffer.tell() == 2 * 2**20
         assert not (f.parts)
         f.flush()
-        assert f.buffer.tell() == 2 * 2 ** 20
+        assert f.buffer.tell() == 2 * 2**20
         assert not (f.parts)
-        f.write(b"a" * 2 * 2 ** 20)
-        f.write(b"a" * 2 * 2 ** 20)
+        f.write(b"a" * 2 * 2**20)
+        f.write(b"a" * 2 * 2**20)
         assert f.mpu
         assert f.parts
-    assert fs.info(full_test_bucket_name + "/temp")["size"] == 6 * 2 ** 20
-    with fs.open(full_test_bucket_name + "/temp", "wb", block_size=10 * 2 ** 20) as f:
-        f.write(b"a" * 15 * 2 ** 20)
+    assert fs.info(full_test_bucket_name + "/temp")["size"] == 6 * 2**20
+    with fs.open(full_test_bucket_name + "/temp", "wb", block_size=10 * 2**20) as f:
+        f.write(b"a" * 15 * 2**20)
         assert f.buffer.tell() == 0
-    assert fs.info(full_test_bucket_name + "/temp")["size"] == 15 * 2 ** 20
+    assert fs.info(full_test_bucket_name + "/temp")["size"] == 15 * 2**20
     fs.rm(full_test_bucket_name + "/temp", recursive=True)
     assert not fs.exists(full_test_bucket_name + "/temp")
 
@@ -1180,7 +1180,7 @@ def test_readline_empty(fs):
 
 
 def test_readline_blocksize(fs):
-    data = b"ab\n" + b"a" * (10 * 2 ** 20) + b"\nab"
+    data = b"ab\n" + b"a" * (10 * 2**20) + b"\nab"
     with fs.open(a, "wb") as f:
         f.write(data)
     with fs.open(a, "rb") as f:
@@ -1189,7 +1189,7 @@ def test_readline_blocksize(fs):
         assert result == expected
 
         result = f.readline()
-        expected = b"a" * (10 * 2 ** 20) + b"\n"
+        expected = b"a" * (10 * 2**20) + b"\n"
         assert result == expected
 
         result = f.readline()
@@ -1294,7 +1294,7 @@ def test_upload_with_oci_prefix(fs):
     path = f"oci://{full_test_bucket_name}/prefix/key"
 
     with fs.open(path, "wb") as f:
-        f.write(b"a" * (10 * 2 ** 20))
+        f.write(b"a" * (10 * 2**20))
 
     assert fs.exists(path)
     fs.rm(path)
@@ -1302,7 +1302,7 @@ def test_upload_with_oci_prefix(fs):
 
 
 def test_multipart_upload_blocksize(fs):
-    blocksize = 5 * (2 ** 20)
+    blocksize = 5 * (2**20)
     expected_parts = 3
 
     fs2 = fs.open(a, "wb", block_size=blocksize)
@@ -1483,21 +1483,22 @@ def test_user_agent_leak():
     assert new_fs.config["additional_user_agent"]
     assert not config["additional_user_agent"]
 
+
 def test_sync(fs):
     import tempfile
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         remote_dir = os.path.join("oci://", full_test_bucket_name, "test")
-        fs.sync(src_dir = remote_dir, dest_dir = tmpdirname)
+        fs.sync(src_dir=remote_dir, dest_dir=tmpdirname)
         assert len(fs.ls(remote_dir)) == len(os.listdir(tmpdirname))
 
     remote_dir = os.path.join("oci://", full_test_bucket_name, "sync") + "/"
     remote_loc = remote_dir + "test"
     with tempfile.TemporaryDirectory() as tmpdirname:
         for i in range(10):
-            with open(os.path.join(tmpdirname, f"test{i}.json"), 'w') as f:
+            with open(os.path.join(tmpdirname, f"test{i}.json"), "w") as f:
                 f.write("{'Hello': 'World', 'Answer': '42'}")
-        fs.sync(src_dir = tmpdirname, dest_dir = remote_loc)
+        fs.sync(src_dir=tmpdirname, dest_dir=remote_loc)
         assert len(fs.ls(remote_dir)) == len(os.listdir(tmpdirname))
 
     fs.rm(remote_dir, recursive=True)

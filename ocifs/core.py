@@ -49,8 +49,21 @@ def setup_logging(level=0):
 
 
 setup_logging()
-OCI_CLI_AUTH_TYPES = {"api_key", "resource_principal", "instance_principal", "security_token", "unknown_signer"}
-IAM_POLICIES = OCI_CLI_AUTH_TYPES + {"unknown_signer"}
+X509_FED_SIGNERS = {"resource_principal", "instance_principal", "security_token"}
+OCI_CLI_AUTH_TYPES = X509_FED_SIGNERS | {"api_key"}
+IAM_POLICIES = OCI_CLI_AUTH_TYPES | {"unknown_signer"}
+OCIFS_ENVIRONMENT_VARIABLES = {
+    "auth": "OCIFS_IAM_TYPE",
+    "config_location": "OCIFS_CONFIG_LOCATION",
+    "profile": "OCIFS_CONFIG_PROFILE",
+}
+OCI_CLI_ENVIRONMENT_VARIABLES = {
+    "config_location": "OCI_CLI_CONFIG_FILE",
+    "profile": "OCI_CLI_PROFILE",
+    "auth": "OCI_CLI_AUTH",
+    "region": "OCI_CLI_REGION",
+    "tenancy": "OCI_CLI_TENANCY",
+}
 
 
 def _get_valid_oci_detail_methods(func):
@@ -88,6 +101,19 @@ def _build_full_path(bucket, namespace, key=None, **kwargs):
     return f"{bucket}@{namespace}"
 
 
+def _get_env_var(parameter_name):
+    for env_dict in [OCIFS_ENVIRONMENT_VARIABLES, OCI_CLI_ENVIRONMENT_VARIABLES]:
+        env_var = env_dict.get(parameter_name)
+        if env_var:
+            parameter_value = os.environ.get(env_var)
+            if parameter_value:
+                logger.debug(
+                    f"Detected environment variable: {env_var}. Setting {parameter_name} to {parameter_value}. If this is not intended, please unset the variable {env_var}, or pass in the parameter {parameter_name} directly."
+                )
+                return parameter_value
+    return None
+
+
 class OCIFileSystem(AbstractFileSystem):
     """Access oci as if it were a file system.
 
@@ -106,7 +132,7 @@ class OCIFileSystem(AbstractFileSystem):
         A signer from the OCI sdk. More info: oci.auth.signers
     profile : str
         The profile to use from the config (If the config is passed in)
-    iam_type : str (None)
+    auth : str (None)
         The IAM Auth principal type to use.
         Values can be one of ["api_key", "resource_principal", "instance_principal", "security_token"]
     region : str (None)
@@ -139,9 +165,11 @@ class OCIFileSystem(AbstractFileSystem):
         config: Union[dict, str, None] = None,
         signer: Union[AbstractBaseSigner, None] = None,
         profile: str = None,
-        security_token_file: str = None,
         iam_type: str = None,
+        auth: str = None,
         region: str = None,
+        default_tenancy: str = None,
+        default_namespace: str = None,
         default_block_size: int = None,
         default_cache_type: str = "bytes",
         default_cache_options: dict = None,
@@ -154,14 +182,18 @@ class OCIFileSystem(AbstractFileSystem):
         self.oci_additional_kwargs = oci_additional_kwargs or dict()
         self.config_kwargs = config_kwargs or dict()
         self.config = config or dict()
+        self._config_location = _get_env_var("config_location")
         self._signer = signer
-        self.profile = profile
-        self.security_token_file = security_token_file
-        self._iam_type = iam_type
+        self.profile = profile or _get_env_var("profile")
+        if iam_type is not None:
+            logger.warn(
+                f"The parameter ``iam_type`` is being deprecated in favor of the more oci-cli congruent ``auth`` parameter."
+            )
+        self._auth_type = auth or iam_type or _get_env_var("auth")
         self.oci_client = None
-        self.region = region
-        self.default_tenancy = None
-        self.default_namespace = None
+        self.region = region or _get_env_var("region")
+        self.default_tenancy = default_tenancy or _get_env_var("tenancy")
+        self.default_namespace = default_namespace
         self.connect()
         super().__init__(**kwargs)
         self.default_cache_options = default_cache_options
@@ -233,9 +265,10 @@ class OCIFileSystem(AbstractFileSystem):
             "oci-cli" in pkg_resources.working_set.by_key.keys()
         ), "Must download oci-cli to use sync: https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm#Quickstart"
 
-        # TODO passthrough profile, config, and token settings
-        if self._iam_type not in OCI_CLI_AUTH_TYPES:
-            raise ValueError(f"Unknown Authentication type. Please create a new OCIFileSystem instance and set iam_type to one of the following valid options: {OCI_CLI_AUTH_TYPES}")
+        if self._auth_type not in OCI_CLI_AUTH_TYPES:
+            raise ValueError(
+                f"Unknown Authentication type. Please create a new OCIFileSystem instance and set ``auth`` to one of the following valid options: {OCI_CLI_AUTH_TYPES}"
+            )
         if self.is_local_path(src_dir):
             if self.is_local_path(dest_dir):
                 raise ValueError(
@@ -257,7 +290,7 @@ class OCIFileSystem(AbstractFileSystem):
                     "--src-dir",
                     src_dir,
                     "--auth",
-                    self._iam_type,
+                    self._auth_type,
                 ]
             )
         elif self.is_local_path(dest_dir):
@@ -277,7 +310,7 @@ class OCIFileSystem(AbstractFileSystem):
                     "--dest-dir",
                     dest_dir,
                     "--auth",
-                    self._iam_type,
+                    self._auth_type,
                 ]
             )
         else:
@@ -323,16 +356,18 @@ class OCIFileSystem(AbstractFileSystem):
         if refresh is False:
             return self.oci_client
 
-        self._determine_iam_auth()
+        self._determine_auth_type()
 
         logger.debug(
-            f"Object Storage Client is being set up using IAM type: {self._iam_type}."
+            f"Object Storage Client is being set up using Auth type: {self._auth_type}."
         )
         self._update_service_endpoint()
         self._update_retry_strategy()
         self._refresh_signer()
         self.config.update(
-            {"additional_user_agent": f"Oracle-ocifs/version={__version__}+{self._iam_type}"}
+            {
+                "additional_user_agent": f"Oracle-ocifs/version={__version__}+{self._auth_type}"
+            }
         )
         self._get_region()
         try:
@@ -954,12 +989,12 @@ class OCIFileSystem(AbstractFileSystem):
         return stripped_path
 
     def _get_region(self, **kwargs):
-        region = self.region or self.kwargs.get("region")
+        region = self.region
         if not region:
             region = (
                 self.config.get("region") if isinstance(self.config, dict) else None
             )
-            if not region and self._iam_type == "resource_principal":
+            if not region and self._auth_type == "resource_principal":
                 region = os.environ.get(
                     "OCI_RESOURCE_PRINCIPAL_REGION"
                 ) or literal_eval(os.environ.get("OCI_REGION_METADATA") or "{}").get(
@@ -970,11 +1005,11 @@ class OCIFileSystem(AbstractFileSystem):
         return region
 
     def _get_default_tenancy(self):
-        tenancy = self.default_tenancy or self.kwargs.get("tenancy")
+        tenancy = self.default_tenancy
         if not tenancy:
-            if self._iam_type == "resource_principal":
+            if self._auth_type == "resource_principal":
                 tenancy = os.environ.get("TENANCY_OCID")
-            else:
+            if not tenancy:
                 namespace_name = self._get_default_namespace()
                 tenancy = self.oci_client.get_namespace_metadata(
                     namespace_name=namespace_name
@@ -988,11 +1023,9 @@ class OCIFileSystem(AbstractFileSystem):
         return tenancy
 
     def _get_default_namespace(self):
-        namespace = self.default_namespace or self.kwargs.get("namespace")
-        if not namespace:
-            namespace = self.oci_client.get_namespace().data
-        self.default_namespace = namespace
-        return namespace
+        if not self.default_namespace:
+            self.default_namespace = self.oci_client.get_namespace().data
+        return self.default_namespace
 
     def _update_service_endpoint(self):
         if self.region is not None and "service_endpoint" not in self.config_kwargs:
@@ -1002,12 +1035,12 @@ class OCIFileSystem(AbstractFileSystem):
 
     def _get_profile(self):
         if self.profile is None:
-            self.profile = os.environ.get("OCIFS_CONFIG_PROFILE", None) or os.environ.get("OCI_CLI_PROFILE", DEFAULT_PROFILE)
+            self.profile = DEFAULT_PROFILE
             logger.debug(f"No profile specified, using: {self.profile}.")
 
     def _get_config(self):
         if not self.config:
-            self.config = os.environ.get("OCIFS_CONFIG_LOCATION", None) or os.environ.get("OCI_CLI_CONFIG_FILE", DEFAULT_LOCATION)
+            self.config = self._config_location or DEFAULT_LOCATION
         if isinstance(self.config, str):
             config_path = self.config
             self._get_profile()
@@ -1017,39 +1050,6 @@ class OCIFileSystem(AbstractFileSystem):
         elif isinstance(self.config, dict):
             self.config = self.config.copy()
 
-    def _get_iam_auth(self):
-        assert self._iam_type in IAM_POLICIES, (
-            "Unrecognized IAM Prinicipal type passed into `iam_type` arg: "
-            f"{self._iam_type}. Please select a valid arg from: {IAM_POLICIES}."
-        )
-        return getattr(self, f"_set_up_{self._iam_type}")()
-
-    def _determine_iam_auth(self):
-        # This get complicated quickly. Essentially the flow is:
-        # If the user has passed in a signer explicitly, use it
-        # If the user has passed in a config explicitly, use it
-        # otherwise check global variables, attempt resource principal, then throw error
-        if not self._iam_type:
-            if self._signer:
-                self._iam_type = "unknown_signer"
-            elif self.config:
-                self._iam_type = "api_key"
-            elif os.environ.get("OCIFS_IAM_TYPE"):
-                self._iam_type = os.environ.get("OCIFS_IAM_TYPE")
-            elif os.environ.get("OCI_CLI_TYPE"):
-                self._iam_type = os.environ.get("OCI_CLI_TYPE")
-            else:
-                try:  # pragma: no cover
-                    self._iam_type = "resource_principal"
-                    self._set_up_resource_principal()
-                except OSError as e:  # pragma: no cover
-                    raise ConfigFileNotFound(
-                        "No iam_type was given, no signer was given, no config file was"
-                        " given, OCIFS_IAM_TYPE environment variable not found, and failed "
-                        f"to create a Resource Principal signer with error: {e}."
-                    )
-        self._get_iam_auth()
-
     def _set_up_resource_principal(self):
         self.config_kwargs["signer"] = get_resource_principals_signer()
 
@@ -1058,16 +1058,14 @@ class OCIFileSystem(AbstractFileSystem):
 
     def _set_up_security_token(self):
         self._get_config()
-        token_file = self.security_token_file
-        if self.security_token_file is None:
-            token_file = os.environ.get("OCI_CLI_SECURITY_TOKEN_FILE")
-            if not token_file:
-                token_file = self.config['security_token_file']
+        token_file = self.config["security_token_file"]
         token = None
-        with open(token_file, 'r') as f:
+        with open(token_file, "r") as f:
             token = f.read()
-        private_key = load_private_key_from_file(self.config['key_file'])
-        self.config_kwargs["signer"] = SecurityTokenSigner(token, private_key) 
+        private_key = load_private_key_from_file(
+            self.config["key_file"], pass_phrase=self.config.get("pass_phrase")
+        )
+        self.config_kwargs["signer"] = SecurityTokenSigner(token, private_key)
 
     def _set_up_api_key(self):
         self._get_config()
@@ -1075,12 +1073,46 @@ class OCIFileSystem(AbstractFileSystem):
     def _set_up_unknown_signer(self):
         self.config_kwargs["signer"] = self._signer
 
+    def _set_up_auth(self):
+        assert self._auth_type in IAM_POLICIES, (
+            "Unrecognized IAM Prinicipal type passed into `auth` arg: "
+            f"{self._auth_type}. Please select a valid arg from: {IAM_POLICIES}."
+        )
+        return getattr(self, f"_set_up_{self._auth_type}")()
+
+    def _determine_auth_type(self):
+        # This get complicated quickly. Essentially the flow is:
+        # If the user has passed in a signer explicitly, use it
+        # If the user has passed in a config explicitly, use it
+        # otherwise check global variables, attempt resource principal, then throw error
+        if self._auth_type:
+            if self._auth_type not in OCI_CLI_AUTH_TYPES:
+                raise ValueError(
+                    f"Unrecognized value for auth_type: {self._auth_type}. Acceptable values are: {OCI_CLI_AUTH_TYPES}"
+                )
+        else:
+            if self._signer:
+                self._auth_type = "unknown_signer"
+            elif self.config:
+                self._auth_type = "api_key"
+            else:
+                try:  # pragma: no cover
+                    self._auth_type = "resource_principal"
+                    self._set_up_resource_principal()
+                except OSError as e:  # pragma: no cover
+                    raise ConfigFileNotFound(
+                        "No ``auth`` type was given, no signer was given, no config file was"
+                        " given, OCIFS_IAM_TYPE environment variable not found, and failed "
+                        f"to create a Resource Principal signer with error: {e}."
+                    )
+        return self._set_up_auth()
+
     def _update_retry_strategy(self):
         if not self.config_kwargs.get("retry_strategy"):
             self.config_kwargs["retry_strategy"] = DEFAULT_RETRY_STRATEGY
 
     def _refresh_signer(self):
-        if self._iam_type in {
+        if self._auth_type in {
             "resource_principal",
             "instance_principal",
             "security_token",
