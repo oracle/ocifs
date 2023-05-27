@@ -139,9 +139,18 @@ class OCIFileSystem(AbstractFileSystem):
         The Region Identifier that the client should connnect to.
         Regions can be found here:
         https://docs.oracle.com/en-us/iaas/Content/General/Concepts/regions.htm
+    tenancy : str (None)
+        The OCID of the tenancy that OCIFileSystem reads from. Defaults to root
+    namespace : str (None)
+        The default namespace that the OCIFileSystem reads from.
+        This is necessary for compatibility with certain frameworks.
     default_block_size : int (None)
         If given, the default block size value used for ``open()``, if no
         specific value is given at all time. The built-in default is 5MB.
+    default_cache_type : str ("bytes")
+        Pass-through to fsspec's AbstractFileSystem.
+    default_cache_options : dict (None)
+        Pass-through to fsspec's AbstractFileSystem.
     config_kwargs : dict
         dict of parameters passed to the OCI Client upon connection
         more info here: oci.object_storage.ObjectStorageClient.__init__
@@ -168,8 +177,8 @@ class OCIFileSystem(AbstractFileSystem):
         iam_type: str = None,
         auth: str = None,
         region: str = None,
-        default_tenancy: str = None,
-        default_namespace: str = None,
+        tenancy: str = None,
+        namespace: str = None,
         default_block_size: int = None,
         default_cache_type: str = "bytes",
         default_cache_options: dict = None,
@@ -192,8 +201,8 @@ class OCIFileSystem(AbstractFileSystem):
         self._auth_type = auth or iam_type or _get_env_var("auth")
         self.oci_client = None
         self.region = region or _get_env_var("region")
-        self.default_tenancy = default_tenancy or _get_env_var("tenancy")
-        self.default_namespace = default_namespace
+        self.default_tenancy = tenancy or _get_env_var("tenancy")
+        self.default_namespace = namespace
         self.connect()
         super().__init__(**kwargs)
         self.default_cache_options = default_cache_options
