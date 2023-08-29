@@ -1,5 +1,5 @@
 
-## Oracle Cloud Infrastructure Object Storage fsspec Implementation
+# Oracle Cloud Infrastructure Object Storage fsspec Implementation
 
 
 [![PyPI](https://img.shields.io/pypi/v/ocifs.svg?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/ocifs/) [![Python](https://img.shields.io/pypi/pyversions/ocifs.svg?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/ocifs/)
@@ -16,7 +16,7 @@ The [Oracle Cloud Infrastructure Object Storage](https://docs.oracle.com/en-us/i
 ​
 The `intake/filesystem_spec` project is used by [Pandas](https://pandas.pydata.org/), [Dask](https://dask.org/) and other data libraries in python, this package adds Oracle OCI Object Storage capabilties to these libraries.
 ​
-## Example Usage:
+## Example Usage
 ```python
 from ocifs import OCIFileSystem
 
@@ -37,7 +37,7 @@ with fs.open("oci://<my_bucket>@<my_namespace>/<my_prefix>/obj1") as f:
 # b"Adding a third object."
 ```
 
-### Or Use With Pandas:
+### Or Use With Pandas
 ​
 ```python
 import pandas as pd
@@ -49,12 +49,12 @@ df = pd.read_csv(
 )
 ```
 ​
-## Getting Started:
+## Getting Started
 ```bash
 python3 -m pip install ocifs
 ```
 
-## Software Prerequisites:
+## Software Prerequisites
 Python >= 3.6
 
 ## Environment Variables for Authentication:
@@ -69,11 +69,22 @@ Note, if you are operating on OCI with an alternative valid signer, such as reso
 export OCIFS_IAM_TYPE=resource_principal
 ```
 
-## Documentation:
+## Documentation
 * [![PyPI](https://img.shields.io/pypi/v/ocifs.svg?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/ocifs/) [![Python](https://img.shields.io/pypi/pyversions/ocifs.svg?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/ocifs/)
 * [ocifs Documentation](https://ocifs.readthedocs.io/en/latest/index.html)
 * [ocifs GitHub](https://github.com/oracle/ocifs)
 
 ## Support
-​
 [The built-in filesystems in `fsspec`](https://filesystem-spec.readthedocs.io/en/latest/api.html#built-in-implementations) are maintained by the `intake` project team, where as `ocifs` is an external implementation (similar to `s3fs`, `gcsfs`, `adl/abfs`, and so on), which is maintained by Oracle.
+
+## Contributing
+This project welcomes contributions from the community. Before submitting a pull request, please [review our contribution guide](./CONTRIBUTING.md)
+
+## Security
+Please consult the [security guide](./SECURITY.md) for our responsible security vulnerability disclosure process
+
+## License
+Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+
+Released under the Universal Permissive License v1.0 as shown at
+<https://oss.oracle.com/licenses/upl/>.
