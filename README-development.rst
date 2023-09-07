@@ -16,9 +16,8 @@ Assuming that you have Python and `conda` installed, set up your environment and
     cd ocifs
     conda create python=3.8 --name ocifs -y
     conda activate ocifs
-    python3 -m pip install -r requirements.txt
-    python3 -m pip install -r requirements-dev.txt
-    python3 -m pip install -r docs/requirements.txt
+    # Install the current package in your environment in an editable mode:
+    python3 -m pip install -e .
 
 You should also set up your configuration files, see the `SDK and CLI Configuration File`__.
 
@@ -26,18 +25,7 @@ __ https://docs.cloud.oracle.com/Content/API/Concepts/sdkconfig.htm
 
 Running Tests
 =============
-The SDK uses `pytest` as its test framework. You can run tests against Python 3.6+ using the `tox` command. Note that this requires that you have those versions of Python installed,
-or you must pass `-e` or run tests directly:
-
-.. code-block:: sh
-
-    # This runs tests against all configured Pythons in tox.ini (3.6+). You must have those versions installed.
-    tox
-
-    # This runs tests against a specific Python version:
-    tox -e py36
-
-If you want to run an individual test, then run:
+The SDK uses `pytest` as its test framework. If you want to run an individual test, then run:
 
 .. code-block:: sh
 
@@ -55,7 +43,7 @@ variables to be set:
 
 Checking Style
 ==============
-The ocifs SDK adheres to PEP8 style guilds, and uses Flake8 to validate style.  There are some exceptions and they can
+The ocifs SDK adheres to PEP8 style guilds, and uses Flake8 to validate style. There are some exceptions and they can
 be viewed in the ``setup.cfg`` file.
 
 There is a pre-commit hook setup for this repo. To use this pre-commit hook, run the following:
@@ -77,16 +65,17 @@ Sphinx is used for documentation. You can generate HTML locally with the followi
 
 .. code-block:: sh
 
-    python3 -m pip install -r requirements.txt
+    python3 -m pip install -r docs/requirements.txt
     cd docs
     make html
 
 Generating the wheel
 ====================
-The SDK is packaged as a wheel. To generate the wheel, you can run:
+The SDK using [build](https://pypa-build.readthedocs.io/en/stable/index.html) as build frontend. To generate sdist and wheel, you can run:
 
 .. code-block:: sh
 
-    python setup.py sdist bdist_wheel
+    pip install build
+    python -m build
 
 This wheel can then be installed using `pip`.

@@ -1,60 +1,10 @@
-#!/usr/bin/env python
-# coding: utf-8
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
-# Licensed under the Universal Permissive License v 1.0 as shown at
-# https://oss.oracle.com/licenses/upl/
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
-import io
-import json
-import os
-from setuptools import setup
-
-
-def open_relative(*path):
-    """
-    Opens files in read-only with a fixed utf-8 encoding.
-    All locations are relative to this setup.py file.
-    """
-    here = os.path.abspath(os.path.dirname(__file__))
-    filename = os.path.join(here, *path)
-    return io.open(filename, mode="r", encoding="utf-8")
-
-
-with open_relative("ocifs", ".version.json") as version_file:
-    OCIFS_VERSION = json.load(version_file)["version"]
-    if not OCIFS_VERSION:
-        raise RuntimeError("Cannot find version information")
-
-with open_relative("README.md") as f:
-    readme = f.read()
-
-setup(
-    name="ocifs",
-    version=OCIFS_VERSION,
-    url="https://github.com/oracle/ocifs",
-    classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: Universal Permissive License (UPL)",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-    ],
-    description="Convenient filesystem interface over Oracle Cloud's Object Storage",
-    maintainer="Allen Hosler",
-    maintainer_email="allen.hosler@oracle.com",
-    long_description=readme,
-    long_description_content_type="text/markdown",
-    license="UPL",
-    keywords="Oracle Cloud Infrastructure, OCI, Object Storage",
-    packages=["ocifs"],
-    python_requires=">= 3.6",
-    include_package_data=True,
-    install_requires=[open("requirements.txt").read().strip().split("\n")],
-    zip_safe=False,
-    project_urls={
-        "Github": "https://github.com/oracle/ocifs",
-        "Documentation": "https://ocifs.readthedocs.io/en/latest/",
-    },
-)
+### File setup.py obsolete and must not be used. Please update pyproject.toml instead.
+### See detailed explanation why here:
+### https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html.
+# PEP 621 – Storing project metadata in pyproject.toml - https://peps.python.org/pep-0621/
+# PEP 518 – Specifying Minimum Build System Requirements for Python Projects https://peps.python.org/pep-0518/
+# PEP 508 – Dependency specification for Python Software Packages - https://peps.python.org/pep-0508/
+# PEP 517 – A build-system independent format for source trees - https://peps.python.org/pep-0517/
