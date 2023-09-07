@@ -847,7 +847,7 @@ class OCIFileSystem(AbstractFileSystem):
         pathlist : listof strings
             The keys to remove, must all be in the same bucket.
         """
-        if not pathlist:
+        if not pathlist or not isinstance(pathlist, list):
             return
         bucket_namespace = {self.split_path(path)[:2] for path in pathlist}
         if len(bucket_namespace) > 1:
