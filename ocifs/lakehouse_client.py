@@ -243,7 +243,7 @@ class LakehouseClient(object):
             }
         else:
             query_params = {
-                "mountType": "EXTERNAL"
+                "mountType": mount_type
             }
         header_params = {
             "accept": "application/json",
@@ -273,7 +273,6 @@ class LakehouseClient(object):
             logger.debug(
                 f"lake_mount response status:{lake_mount.status}"
                 f",lake_mount data:{lake_mount.data}")
-            logger.debug(f"lake_mount response mount_type:{lake_mount.data.mount_type}")
         except Exception as excep:
             logger.error(
                 "Exception encountered when fetching bucket and namespace for the given mountName "

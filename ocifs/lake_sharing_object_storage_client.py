@@ -175,7 +175,6 @@ class LakeSharingObjectStorageClient(ObjectStorageClient):
         lake_sharing_client: LakeSharingClient = None
         if self.lake_ocid_to_lake_sharing_client_map.get(lake_ocid):
             lake_sharing_client = self.lake_ocid_to_lake_sharing_client_map.get(lake_ocid)
-            logger.debug(f"lake_sharing_client is fetched from the cache:{lake_sharing_client}")
         else:
             lakeshare_endpoint = lake_client.get_lakeshare_endpoint(lake_ocid, **kwargs)
             logger.debug(f"lakeSharing server api endpoint is:{lakeshare_endpoint}")
@@ -184,7 +183,6 @@ class LakeSharingObjectStorageClient(ObjectStorageClient):
             logger.debug(f"lakeSharing api server health check status:{lake_sharing_service_health_status}")
             if lake_sharing_service_health_status:
                 self.lake_ocid_to_lake_sharing_client_map[lake_ocid] = lake_sharing_client
-                logger.debug(f"lake_sharing_client is stored into the cache:{lake_sharing_client}")
         return lake_sharing_client
 
     def get_bucket_namespace_for_given_mount_name(self, lake_ocid: str, mount_spec_array, mount_type: str = None,
@@ -199,11 +197,9 @@ class LakeSharingObjectStorageClient(ObjectStorageClient):
         bucket_namespace_map = dict()
         if self.lake_ocid_to_lake_client_map.get(lake_ocid):
             lake_client = self.lake_ocid_to_lake_client_map.get(lake_ocid)
-            logger.debug(f"lake_client is fetched from the cache:{lake_client}")
         else:
             lake_client = LakehouseClient(self.config, lake_service_api_endpoint, **kwargs)
             self.lake_ocid_to_lake_client_map[lake_ocid] = lake_client
-            logger.debug(f"lake_client is stored into the cache:{lake_client}")
         self.lake_ocid_to_lake_sharing_client_map[lake_ocid] = self.get_lake_sharing_client(lake_ocid, lake_client,
                                                                                             **kwargs)
         mount_scope_entity_type: str = None
@@ -227,12 +223,10 @@ class LakeSharingObjectStorageClient(ObjectStorageClient):
                                                               **kwargs)
 
         if lake_mount_response.status == 200:
-            logger.debug(f"bucket_namespace_map::>>>>{lake_mount_response.data.mount_spec}")
             bucket_namespace_map['namespace'] = lake_mount_response.data.mount_spec.namespace
             bucket_namespace_map['bucket_name'] = lake_mount_response.data.mount_spec.bucket_name
         if len(bucket_namespace_map) == 0:
             raise ValueError('Invalid value given for mountName or lakeOcid.Please check !!!!!!')
-        logger.debug(f"bucket_namespace_map::>>>>{bucket_namespace_map}")
         cache_key: str = bucket_namespace_map['namespace'] + '-' + bucket_namespace_map['bucket_name']
         self.bucket_namespace_to_lake_ocid_map[cache_key] = lake_ocid
         return bucket_namespace_map
