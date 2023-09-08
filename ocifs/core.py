@@ -310,7 +310,7 @@ class OCIFileSystem(AbstractFileSystem):
             or
             Input path(Table Mount), like `ocilake://mountname:table:db1:tbl1@lakeocid/path/to/file`
              or
-            Input path(Table Mount), like `ocilake://mountname:user:userid@lakeocid/path/to/file`
+            Input path(User Mount), like `ocilake://mountname:user:userOcid@lakeocid/path/to/file`
         Examples
         --------
         >>> split_path("oci://mybucket@mynamespace/path/to/file")
