@@ -306,7 +306,7 @@ class OCIFileSystem(AbstractFileSystem):
             or
             Input path(External Mount), like `ocilake://mountname@lakeocid/path/to/file`
             or
-            Input path(DB Mount), like `ocilake://mountname:datbase:db1@lakeocid/path/to/file`
+            Input path(DB Mount), like `ocilake://mountname:database:db1@lakeocid/path/to/file`
             or
             Input path(Table Mount), like `ocilake://mountname:table:db1:tbl1@lakeocid/path/to/file`
              or

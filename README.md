@@ -16,7 +16,7 @@ The [Oracle Cloud Infrastructure Object Storage](https://docs.oracle.com/en-us/i
 ​
 The `intake/filesystem_spec` project is used by [Pandas](https://pandas.pydata.org/), [Dask](https://dask.org/) and other data libraries in python, this package adds Oracle OCI Object Storage capabilties to these libraries.
 ​
-## Example Usage
+## Example Usage for non data lake integration
 ```python
 from ocifs import OCIFileSystem
 
@@ -37,6 +37,33 @@ with fs.open("oci://<my_bucket>@<my_namespace>/<my_prefix>/obj1") as f:
 # b"Adding a third object."
 ```
 
+## Example Usage for the data lake integration
+```python
+from ocifs import OCIFileSystem
+# To access the  External Mount bucket got managed by Data lake 
+fs = OCIFilesystem("~/.oci/config")
+fs.ls("ocilake://<mountname>@lakeocid/<my_prefix>")
+# [<my_bucket>@<my_namespace>/<my_prefix>/obj1, <my_bucket>@<my_namespace>/<my_prefix>/obj2]
+# To access the  Database Mount bucket got managed by Data lake 
+fs.ls("ocilake://<mountname>:database:<databaseKey>@lakeocid/<my_prefix>")
+# [<my_bucket>@<my_namespace>/<my_prefix>/obj1, <my_bucket>@<my_namespace>/<my_prefix>/obj2]
+# To access the  Table Mount bucket got managed by Data lake 
+fs.ls("ocilake://<mountname>:table:<databaseKey>:<tableKey>@lakeocid/<my_prefix>")
+# [<my_bucket>@<my_namespace>/<my_prefix>/obj1, <my_bucket>@<my_namespace>/<my_prefix>/obj2]
+# To access the  User Mount bucket got managed by Data lake 
+fs.ls("ocilake://<mountname>:user:<userOcid>@lakeocid/<my_prefix>")
+# [<my_bucket>@<my_namespace>/<my_prefix>/obj1, <my_bucket>@<my_namespace>/<my_prefix>/obj2]
+
+fs.cat("ocilake://<mountname>:database:<databaseKey>@lakeocid/<my_prefix>/obj1")
+# b"Hello World"
+
+with fs.open("ocilake://<mountname>:database:<databaseKey>@lakeocid/<my_prefix>/obj3", 'w') as f:
+    f.write("Adding a third object.")
+
+with fs.open("ocilake://<mountname>:database:<databaseKey>@lakeocid/<my_prefix>/obj1") as f:
+    print(f.read())
+# b"Adding a third object."
+```
 ### Or Use With Pandas
 ​
 ```python
