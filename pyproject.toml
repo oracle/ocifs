@@ -1,0 +1,60 @@
+## This file created and used instead of setup.py for building and installing ads package. This change is to
+## follow best practive to "not invoke setup.py directly", see detailed explanation why here:
+## https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html.
+## Check README-development.md and Makefile for instruction how to install or build ADS locally.
+
+[build-system]
+# These are the assumed default build requirements from pip:
+# https://pip.pypa.io/en/stable/reference/pip/#pep-517-and-518-support
+# PEP 517 – A build-system independent format for source trees - https://peps.python.org/pep-0517/
+requires = ["flit-core >= 3.8"]
+build-backend = "flit_core.buildapi"
+
+
+[project]
+# Declaring project metadata
+# https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
+# PEP 621 – Storing project metadata in pyproject.toml - https://peps.python.org/pep-0621/
+# PEP 518 – Specifying Minimum Build System Requirements for Python Projects https://peps.python.org/pep-0518/
+
+# Required
+name = "ocifs"  # the install (PyPI) name
+version = "1.2.1"
+
+# Optional
+description = "Convenient filesystem interface over Oracle Cloud's Object Storage"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.6"
+license = {file = "LICENSE.txt"}
+authors = [
+  {name = "Oracle Cloud Infrastructure Data Science"}
+]
+maintainers = [
+  {name = "Allen Hosler", email = "allen.hosler@oracle.com"}
+]
+keywords = [
+  "Oracle Cloud Infrastructure",
+  "OCI",
+  "Object Storage",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Universal Permissive License (UPL)",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+]
+
+# PEP 508 – Dependency specification for Python Software Packages - https://peps.python.org/pep-0508/
+# In dependencies se "<library>; platform_machine == 'aarch64'" to specify ARM underlying platform
+# Copied from install_requires list in setup.py, setup.py got removed in favor of this config file
+dependencies = [
+  "fsspec>=0.8.7",
+  "oci>=2.43.1",
+]
+
+[project.urls]
+"Github" = "https://github.com/oracle/ocifs"
+"Documentation" = "https://ocifs.readthedocs.io/en/latest/index.html"

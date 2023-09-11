@@ -1,14 +1,15 @@
 # coding: utf-8
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
-# Licensed under the Universal Permissive License v 1.0 as shown at
-# https://oss.oracle.com/licenses/upl/
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
-import json
-import os
+import sys
 
 
 __version__ = "UNKNOWN"
-with open(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".version.json")
-) as version_file:
-    __version__ = json.load(version_file)["version"]
+# https://packaging.python.org/en/latest/guides/single-sourcing-package-version/#single-sourcing-the-package-version
+if sys.version_info >= (3, 8):
+    from importlib import metadata
+else:
+    import importlib_metadata as metadata
+
+__version__ = metadata.version("ocifs")
