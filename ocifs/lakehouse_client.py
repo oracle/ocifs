@@ -239,7 +239,7 @@ class LakehouseClient(object):
                 "mountScopeEntityType": mount_scope_entity_type,
                 "mountScopeSchemaKey": mount_scope_schema_key,
                 "mountScopeTableKey": mount_scope_table_key,
-                "mountScopeUserId": mount_scope_entity_type
+                "mountScopeUserId": mount_scope_user_id
             }
         else:
             query_params = {
