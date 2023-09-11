@@ -13,7 +13,8 @@ useDefault = true
     regexes = [
         '''example-password''',
         '''this-is-not-the-secret''',
-        '''<redacted>'''
+        '''<redacted>''',
+        '''security_token''',
     ]
 
 # Describe rule to search real ocids
