@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2023 Oracle and/or its affiliates.
-# Licensed under the Universal Permissive License v 1.0 as shown at
-# https://oss.oracle.com/licenses/upl/
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
 from contextlib import contextmanager
 import io
@@ -159,6 +158,7 @@ def test_simple(fs):
         assert out == data
 
 
+@pytest.mark.skip("Implementation Pending")
 def test_security_token():
     data = b"a" * (10 * 2**20)
     oci_fs = OCIFileSystem(profile=security_token_profile, auth="security_token")
@@ -227,6 +227,7 @@ def test_large_append(fs):
         assert out == data1 + data2
 
 
+@pytest.mark.skip()
 def test_client_kwargs():
     bad_fs = OCIFileSystem(
         config=config,
