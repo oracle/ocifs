@@ -16,7 +16,7 @@ The [Oracle Cloud Infrastructure Object Storage](https://docs.oracle.com/en-us/i
 ​
 The `intake/filesystem_spec` project is used by [Pandas](https://pandas.pydata.org/), [Dask](https://dask.org/) and other data libraries in python, this package adds Oracle OCI Object Storage capabilties to these libraries.
 ​
-##  OCIFS file system style operations Example without Lake Integration:
+##  OCIFS file system style operations Example for non Data Lake Integration:
 ```python
 from ocifs import OCIFileSystem
 
@@ -75,7 +75,7 @@ fs = OCIFilesystem("~/.oci/config")
 
 ```
 
-##  OCIFS file system style operations Example with Lake Integration:
+##  OCIFS file system style operations Example for Data Lake Integration:
 ```python
 from ocifs import OCIFileSystem
 fs = OCIFilesystem("~/.oci/config")
@@ -156,7 +156,7 @@ with fs.open("ocilake://<mountname>:database:<databaseKey>@lakeocid/<my_prefix>/
  fs.bulk_delete(pathlist)''
 ```
 
-### Or Use With Pandas for non Lake Integration
+### Or Use With Pandas for non Data Lake Integration
 ​
 ```python
 import pandas as pd
@@ -168,7 +168,7 @@ df = pd.read_csv(
 )
 ```
 
-### Or Use With Pandas for  Lake Integration
+### Or Use With Pandas for Data Lake Integration
 ​
 ```python
 import pandas as pd
@@ -181,7 +181,7 @@ import ocifs
 )
 ```
 
-### Or Use With PyArrow for non Lake Integration
+### Or Use With PyArrow for non Data Lake Integration
 ​
 ```python
 import pandas as pd
@@ -191,7 +191,7 @@ df = pd.read_csv(
     "oci://my_bucket@my_namespace/my_object.csv",storage_options={"config": "~/.oci/config"})
 ```
 
-### Or Use With PyArrow for  Lake Integration
+### Or Use With PyArrow for Data Lake Integration
 ​
 ```python
 import ads
@@ -216,7 +216,7 @@ import pandas as pd
     print(dataset.to_table())
 ```
 
-### Or Use With ADSDataset for non Lake Integration
+### Or Use With ADSDataset for non Data Lake Integration
 ​
 ```python
 import ads
@@ -233,7 +233,7 @@ from ads.dataset.dataset import ADSDataset
     print(ds.df)
 ```
 
-### Or Use With ADSDataset for  Lake Integration
+### Or Use With ADSDataset for Data Lake Integration
 ​
 ```python
 import ads
