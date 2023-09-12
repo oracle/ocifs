@@ -273,6 +273,12 @@ Note, if you are operating on OCI with an alternative valid signer, such as reso
 export OCIFS_IAM_TYPE=resource_principal
 ```
 
+## Environment Variables for enabling Logging:
+To quickly see all messages, you can set the environment variable OCIFS_LOGGING_LEVEL=DEBUG.
+```bash
+export OCIFS_LOGGING_LEVEL=DEBUG
+```
+
 ## Documentation
 * [![PyPI](https://img.shields.io/pypi/v/ocifs.svg?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/ocifs/) [![Python](https://img.shields.io/pypi/pyversions/ocifs.svg?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/ocifs/)
 * [ocifs Documentation](https://ocifs.readthedocs.io/en/latest/index.html)
