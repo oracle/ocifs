@@ -92,15 +92,8 @@ fs.ls("ocilake://<mountname>:table:<databaseKey>:<tableKey>@lakeocid/<my_prefix>
 fs.ls("ocilake://<mountname>:user:<userOcid>@lakeocid/<my_prefix>")
 # [<my_bucket>@<my_namespace>/<my_prefix>/obj1, <my_bucket>@<my_namespace>/<my_prefix>/obj2]
 
-fs.cat("ocilake://<mountname>:database:<databaseKey>@lakeocid/<my_prefix>/obj1")
-# b"Hello World"
-
-with fs.open("ocilake://<mountname>:database:<databaseKey>@lakeocid/<my_prefix>/obj3", 'w') as f:
-    f.write("Adding a third object.")
-
-with fs.open("ocilake://<mountname>:database:<databaseKey>@lakeocid/<my_prefix>/obj1") as f:
-    print(f.read())
-# b"Adding a third object."
+#The below examples for external mounts and the same can be leveraged 
+#to managed mounts like Database mount or User mount or Table mount
 # 1.Create empty file or truncate in OCI objectstorage bucket
  fs.touch("ocilake://<mountname>@lakeocid/<my_prefix>/lakesharing.txt", truncate=True, data=b"Welcome to Data Lake!")
  # 2.Fetch(potentially multiple paths' contents
