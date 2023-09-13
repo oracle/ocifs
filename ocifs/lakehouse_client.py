@@ -228,7 +228,7 @@ class LakehouseClient(object):
             if mount_scope_entity_type == 'DATABASE' and not mount_scope_schema_key:
                 raise ValueError('mount_scope_schema_key parameter cannot be None, whitespace or empty string')
             if mount_scope_entity_type == 'TABLE':
-                if not mount_scope_schema_key and not mount_scope_table_key:
+                if not mount_scope_schema_key or not mount_scope_table_key:
                     raise ValueError('mount_scope_schema_key and mount_scope_table_key  parameters cannot be None, '
                                      'whitespace or empty string')
             if mount_scope_entity_type == 'USER':
