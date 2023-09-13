@@ -68,6 +68,10 @@ class MountSpecification(object):
             The value to assign to the mount_scope_user_id property of this MountSpecification.
         :type mount_scope_user_id: str
 
+        :param oci_fs_uri:
+            The value to assign to the oci_fs_uri property of this MountSpecification.
+        :type oci_fs_uri: str
+
         """
         self.swagger_types = {
             'obj_store_location': 'str',
@@ -78,7 +82,8 @@ class MountSpecification(object):
             'mount_scope_database_key': 'str',
             'mount_scope_schema_key': 'str',
             'mount_scope_table_key': 'str',
-            'mount_scope_user_id': 'str'
+            'mount_scope_user_id': 'str',
+            'oci_fs_uri': 'str'
         }
 
         self.attribute_map = {
@@ -90,7 +95,8 @@ class MountSpecification(object):
             'mount_scope_database_key': 'mountScopeDatabaseKey',
             'mount_scope_schema_key': 'mountScopeSchemaKey',
             'mount_scope_table_key': 'mountScopeTableKey',
-            'mount_scope_user_id': 'mountScopeUserId'
+            'mount_scope_user_id': 'mountScopeUserId',
+            'oci_fs_uri': 'ociFsUri'
         }
 
         self._obj_store_location = None
@@ -102,6 +108,7 @@ class MountSpecification(object):
         self._mount_scope_schema_key = None
         self._mount_scope_table_key = None
         self._mount_scope_user_id = None
+        self._oci_fs_uri = None
 
     @property
     def obj_store_location(self):
@@ -324,6 +331,30 @@ class MountSpecification(object):
         :type: str
         """
         self._mount_scope_user_id = mount_scope_user_id
+
+    @property
+    def oci_fs_uri(self):
+        """
+        Gets the oci_fs_uri of this MountSpecification.
+        OCI FS URI which is used as URI for OCI FS (Python)
+
+
+        :return: The oci_fs_uri of this MountSpecification.
+        :rtype: str
+        """
+        return self._oci_fs_uri
+
+    @oci_fs_uri.setter
+    def oci_fs_uri(self, oci_fs_uri):
+        """
+        Sets the oci_fs_uri of this MountSpecification.
+        OCI FS URI which is used as URI for OCI FS (Python)
+
+
+        :param oci_fs_uri: The oci_fs_uri of this MountSpecification.
+        :type: str
+        """
+        self._oci_fs_uri = oci_fs_uri
 
     def __repr__(self):
         return formatted_flat_dict(self)
