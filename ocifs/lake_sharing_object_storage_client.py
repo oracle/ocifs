@@ -225,43 +225,24 @@ class LakeSharingObjectStorageClient(ObjectStorageClient):
         if lake_mount_response.status == 200:
             bucket_namespace_map['namespace'] = lake_mount_response.data.mount_spec.namespace
             bucket_namespace_map['bucket_name'] = lake_mount_response.data.mount_spec.bucket_name
-        if len(bucket_namespace_map) == 0:
+        else:
             raise ValueError('Invalid value given for mountName or lakeOcid.Please check !!!!!!')
         cache_key: str = bucket_namespace_map['namespace'] + '-' + bucket_namespace_map['bucket_name']
         self.bucket_namespace_to_lake_ocid_map[cache_key] = lake_ocid
         return bucket_namespace_map
 
     def is_lakehouse_managed_bucket(self, namespace_name, bucket_name):
-        oci_lake_managed: bool = False
-        lake_sharing_client: LakeSharingClient = None
         cache_key: str = namespace_name + '-' + bucket_name
+        oci_lake_managed: bool = False
         if self.bucket_namespace_to_lake_ocid_map.get(cache_key) is None:
-            return oci_lake_managed
-        lake_ocid = self.bucket_namespace_to_lake_ocid_map.get(cache_key)
-        lake_sharing_client = self.lake_ocid_to_lake_sharing_client_map.get(lake_ocid)
-        if lake_sharing_client:
-            if self.managed_prefix_collection_response_cache.get(cache_key):
-                managed_prefix_collection_response_data = self.managed_prefix_collection_response_cache[cache_key]
-            else:
-                managed_prefix_collection_response_data = lake_sharing_client.list_managed_prefixes(namespace_name,
-                                                                                                    bucket_name)
-                self.managed_prefix_collection_response_cache[cache_key] = managed_prefix_collection_response_data
-            if managed_prefix_collection_response_data:
-                if managed_prefix_collection_response_data.is_force_fallback_for_managed:
-                    service_namespace = managed_prefix_collection_response_data.service_namespace
-                    if namespace_name == service_namespace:
-                        oci_lake_managed = False
-                    else:
-                        oci_lake_managed = True
-                else:
-                    service_namespace = managed_prefix_collection_response_data.service_namespace
-                    if namespace_name == service_namespace:
-                        oci_lake_managed = True
-                logger.debug(
-                    "is_lakehouse_managed"
-                    " for the given lake namespace:"
-                    f"{namespace_name} and it's bucket:{bucket_name} is:{oci_lake_managed}"
-                )
+            return False
+        else:
+            oci_lake_managed = True
+        logger.debug(
+            "is_lakehouse_managed"
+            " for the given lake namespace:"
+            f"{namespace_name} and it's bucket:{bucket_name} is:{oci_lake_managed}"
+        )
         return oci_lake_managed
 
     def abort_multipart_upload(self, namespace_name, bucket_name, object_name, upload_id, **kwargs):
