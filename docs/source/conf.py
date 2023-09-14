@@ -27,7 +27,7 @@ author = "Allen Hosler"
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinxcontrib.napoleon",
+    "sphinx.ext.napoleon",
     "nbsphinx",
     "sphinx_rtd_theme",
 ]
