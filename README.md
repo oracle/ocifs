@@ -199,8 +199,6 @@ import pandas as pd
 ​
  
  fs = ocifs.OCIFileSystem(config="~/.oci/config", profile='<profile_name>')
- dataset = pyarrowDs.dataset(f"ocilake://<mountname>@lakeocid/userdata1.parquet", filesystem=fs)
- print(dataset.to_table())
  df = pd.DataFrame({'one': [-1, np.nan, 2.5],
                        'two': ['foo', 'bar', 'baz'], 'three': [True, False, True]}, index=list('abc'))
  table = pa.Table.from_pandas(df)
