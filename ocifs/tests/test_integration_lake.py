@@ -17,7 +17,8 @@ storage_options = {"config": config}
 def reset_folder():
     oci_fs = OCIFileSystem(config=config, profile='iad_prod')
     try:
-        oci_fs.rm(full_external_mount_name + "/a/employees.csv")
+        if oci_fs.lexists(full_external_mount_name + "/a/employees.csv"):
+            oci_fs.rm(full_external_mount_name + "/a/employees.csv")
     except FileNotFoundError:
         pass
     yield
