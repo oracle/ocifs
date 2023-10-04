@@ -41,7 +41,12 @@ if "OCIFS_LOGGING_LEVEL" in os.environ:
 
 
 def get_lake_service_endpoint(lake_ocid: str):
-    lake_service_api_endpoint = 'https://lake.' + lake_ocid.split('.')[3] + '.oci.oraclecloud.com'
+    region =lake_ocid.split('.')[3]
+    if region == 'iad':
+        lake_service_api_endpoint = 'https://lake.' + 'us-ashburn-1' + '.oci.oraclecloud.com'
+    else:
+        lake_service_api_endpoint = 'https://lake.' + region + '.oci.oraclecloud.com'
+
     return lake_service_api_endpoint
 
 
