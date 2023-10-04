@@ -13,6 +13,7 @@ config = oci.config.from_file("~/.oci/config", profile_name='iad_prod')
 full_external_mount_name = os.environ["OCIFS_EXTERNAL_MOUNT_URI"]
 storage_options = {"config": config}
 
+
 @pytest.fixture(autouse=True)
 def reset_folder():
     oci_fs = OCIFileSystem(config=config, profile='iad_prod')
