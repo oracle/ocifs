@@ -2,7 +2,6 @@
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at
 # https://oss.oracle.com/licenses/upl/
-import importlib
 import os
 from ast import literal_eval
 import inspect
@@ -31,8 +30,9 @@ from oci.pagination import list_call_get_all_results
 from oci.retry import DEFAULT_RETRY_STRATEGY
 from oci._vendor.requests.structures import CaseInsensitiveDict
 from .errors import translate_oci_error
-from .lake_sharing_object_storage_client import LakeSharingObjectStorageClient
+from ocifs.data_lake.lake_sharing_object_storage_client import LakeSharingObjectStorageClient
 from .utils import __version__
+
 
 logger = logging.getLogger("ocifs")
 
