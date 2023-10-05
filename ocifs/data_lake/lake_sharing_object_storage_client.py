@@ -1095,8 +1095,13 @@ class LakeSharingObjectStorageClient(ObjectStorageClient):
                                                     reencrypt_object_details, **kwargs)
 
     def rename_object(self, namespace_name, bucket_name, rename_object_details, **kwargs):
-        return ObjectStorageClient.rename_object(self, namespace_name, bucket_name, rename_object_details,
-                                                 **kwargs)
+        oci_lake_managed_by_bucket = self.is_lakehouse_managed_bucket(namespace_name, bucket_name)
+        if oci_lake_managed_by_bucket:
+            lake_sharing_client = self.get_lake_sharing_client_by_bucket_namespace(namespace_name, bucket_name)
+            return lake_sharing_client.rename_object(rename_object_details, namespace_name, bucket_name, **kwargs)
+        else:
+            return ObjectStorageClient.rename_object(self, namespace_name, bucket_name, rename_object_details,
+                                                     **kwargs)
 
     def restore_objects(self, namespace_name, bucket_name, restore_objects_details, **kwargs):
         return ObjectStorageClient.restore_objects(self, namespace_name, bucket_name, restore_objects_details,

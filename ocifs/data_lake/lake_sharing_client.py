@@ -16,6 +16,8 @@ from ocifs.errors import translate_oci_error
 from .managed_prefix_collection import ManagedPrefixCollection
 from .managed_prefix_summary import ManagedPrefixSummary
 from .par_response import ParResponse
+from .rename_object_details import RenameObjectDetails
+
 
 missing = Sentinel("Missing")
 
@@ -460,3 +462,97 @@ class LakeSharingClient(object):
             )
             raise translate_oci_error(excep) from excep
         return managed_prefix_collection_response_data
+
+    def rename_object(self, rename_object_details: RenameObjectDetails, namespace, bucket, **kwargs):
+        """
+        Renames a object in a particular bucket in tenancy namespace
+
+        :param oci.lakesharing.models.RenameObjectDetails rename_object_details: (required)
+            The object details to be renamed.
+
+        :param str namespace: (required)
+            Unique Namespace identifier
+
+        :param str bucket: (required)
+            Unique Bucket identifier
+
+        :param str opc_request_id: (optional)
+            The client request ID for tracing.
+
+        :param str if_match: (optional)
+            For optimistic concurrency control. In the PUT or DELETE call
+            for a resource, set the `if-match` parameter to the value of the
+            etag from a previous GET or POST response for that resource.
+            The resource will be updated or deleted only if the etag you
+            provide matches the resource's current etag value.
+
+        :param str lakeshare_client_resource_family: (optional)
+            HTTP header describing client resource type
+
+        :param str lakeshare_client_resource_ocid: (optional)
+            HTTP header containing client resource ocid
+
+        :param obj retry_strategy: (optional)
+            A retry strategy to apply to this specific operation/call. This will override any retry strategy set at the client-level.
+
+            This should be one of the strategies available in the :py:mod:`~oci.retry` module. A convenience :py:data:`~oci.retry.DEFAULT_RETRY_STRATEGY`
+            is also available. The specifics of the default retry strategy are described `here <https://oracle-cloud-infrastructure-python-sdk.readthedocs.io/en/latest/sdk_behaviors/retries.html>`__.
+
+            To have this operation explicitly not perform any retries, pass an instance of :py:class:`~oci.retry.NoneRetryStrategy`.
+
+        :return: A :class:`~oci.response.Response` object with data of type None
+        :rtype: :class:`~oci.response.Response`
+        """
+        resource_path = "/renameObject"
+        method = "POST"
+        query_params = {
+            "namespace": namespace,
+            "bucket": bucket
+        }
+        query_params = {k: v for (k, v) in six.iteritems(query_params) if v is not missing and v is not None}
+
+        header_params = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "opc-request-id": kwargs.get("opc_request_id", missing),
+            "if-match": kwargs.get("if_match", missing),
+            "lakeshare-client-resource-family": kwargs.get("lakeshare_client_resource_family", missing),
+            "lakeshare-client-resource-ocid": kwargs.get("lakeshare_client_resource_ocid", missing)
+        }
+        header_params = {k: v for (k, v) in six.iteritems(header_params) if v is not missing and v is not None}
+
+        rename_object_response = None
+        try:
+            if self.retry_strategy:
+                rename_object_response = self.retry_strategy.make_retrying_call(
+                self.base_client.call_api,
+                resource_path=resource_path,
+                method=method,
+                query_params=query_params,
+                header_params=header_params,
+                body=rename_object_details)
+            else:
+                rename_object_response = self.base_client.call_api(
+                resource_path=resource_path,
+                method=method,
+                query_params=query_params,
+                header_params=header_params,
+                body=rename_object_details)
+            logger.debug(
+                "Renaming object from the lakesharing server"
+                " for the given lake namespace: "
+                f"{namespace} ,bucket:{bucket},source_name:{rename_object_details.source_name}"
+                f",new_name:{rename_object_details.new_name}"
+                f",rename_object_response status:{rename_object_response.status}"
+                f",rename_object_response data:{rename_object_response.data}"
+                f" and it's opc-request-id:{rename_object_response.headers['opc-request-id']}"
+            )
+        except Exception as excep:
+            logger.error(
+                "Exception encountered when renaming the object "
+                "for the given lake namespace:"
+                f"{namespace} ,bucket :{bucket} ,object:{object} "
+                f" and exception details: : {excep}"
+            )
+            raise translate_oci_error(excep) from excep
+        return rename_object_response
