@@ -1,4 +1,11 @@
-from oci.util import formatted_flat_dict, NONE_SENTINEL, value_allowed_none_or_none_sentinel  # noqa: F401
+# coding: utf-8
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+from oci.util import (
+    formatted_flat_dict,
+    NONE_SENTINEL,
+    value_allowed_none_or_none_sentinel,
+)  # noqa: F401
 from oci.decorators import init_model_state_from_kwargs
 
 
@@ -45,15 +52,15 @@ class ParResponse(object):
 
         """
         self.swagger_types = {
-            'par_hash': 'str',
-            'prefix_path': 'str',
-            'par_type': 'str'
+            "par_hash": "str",
+            "prefix_path": "str",
+            "par_type": "str",
         }
 
         self.attribute_map = {
-            'par_hash': 'parHash',
-            'prefix_path': 'prefixPath',
-            'par_type': 'parType'
+            "par_hash": "parHash",
+            "prefix_path": "prefixPath",
+            "par_type": "parType",
         }
 
         self._par_hash = None
@@ -135,7 +142,7 @@ class ParResponse(object):
         """
         allowed_values = ["DATABASE", "TABLE", "MOUNT", "PATH"]
         if not value_allowed_none_or_none_sentinel(par_type, allowed_values):
-            par_type = 'UNKNOWN_ENUM_VALUE'
+            par_type = "UNKNOWN_ENUM_VALUE"
         self._par_type = par_type
 
     def __repr__(self):

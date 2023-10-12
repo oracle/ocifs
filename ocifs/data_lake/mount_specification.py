@@ -1,9 +1,11 @@
 # coding: utf-8
-# Copyright (c) 2016, 2023, Oracle and/or its affiliates.  All rights reserved.
-# This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
-
-
-from oci.util import formatted_flat_dict, NONE_SENTINEL, value_allowed_none_or_none_sentinel  # noqa: F401
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+from oci.util import (
+    formatted_flat_dict,
+    NONE_SENTINEL,
+    value_allowed_none_or_none_sentinel,
+)  # noqa: F401
 from oci.decorators import init_model_state_from_kwargs
 
 
@@ -74,29 +76,29 @@ class MountSpecification(object):
 
         """
         self.swagger_types = {
-            'obj_store_location': 'str',
-            'file_path': 'str',
-            'namespace': 'str',
-            'bucket_name': 'str',
-            'mount_scope_entity_type': 'str',
-            'mount_scope_database_key': 'str',
-            'mount_scope_schema_key': 'str',
-            'mount_scope_table_key': 'str',
-            'mount_scope_user_id': 'str',
-            'oci_fs_uri': 'str'
+            "obj_store_location": "str",
+            "file_path": "str",
+            "namespace": "str",
+            "bucket_name": "str",
+            "mount_scope_entity_type": "str",
+            "mount_scope_database_key": "str",
+            "mount_scope_schema_key": "str",
+            "mount_scope_table_key": "str",
+            "mount_scope_user_id": "str",
+            "oci_fs_uri": "str",
         }
 
         self.attribute_map = {
-            'obj_store_location': 'objStoreLocation',
-            'file_path': 'filePath',
-            'namespace': 'namespace',
-            'bucket_name': 'bucketName',
-            'mount_scope_entity_type': 'mountScopeEntityType',
-            'mount_scope_database_key': 'mountScopeDatabaseKey',
-            'mount_scope_schema_key': 'mountScopeSchemaKey',
-            'mount_scope_table_key': 'mountScopeTableKey',
-            'mount_scope_user_id': 'mountScopeUserId',
-            'oci_fs_uri': 'ociFsUri'
+            "obj_store_location": "objStoreLocation",
+            "file_path": "filePath",
+            "namespace": "namespace",
+            "bucket_name": "bucketName",
+            "mount_scope_entity_type": "mountScopeEntityType",
+            "mount_scope_database_key": "mountScopeDatabaseKey",
+            "mount_scope_schema_key": "mountScopeSchemaKey",
+            "mount_scope_table_key": "mountScopeTableKey",
+            "mount_scope_user_id": "mountScopeUserId",
+            "oci_fs_uri": "ociFsUri",
         }
 
         self._obj_store_location = None
@@ -232,8 +234,10 @@ class MountSpecification(object):
         :type: str
         """
         allowed_values = ["DATABASE", "TABLE", "USER"]
-        if not value_allowed_none_or_none_sentinel(mount_scope_entity_type, allowed_values):
-            mount_scope_entity_type = 'UNKNOWN_ENUM_VALUE'
+        if not value_allowed_none_or_none_sentinel(
+            mount_scope_entity_type, allowed_values
+        ):
+            mount_scope_entity_type = "UNKNOWN_ENUM_VALUE"
         self._mount_scope_entity_type = mount_scope_entity_type
 
     @property

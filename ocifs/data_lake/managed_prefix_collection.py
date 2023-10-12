@@ -1,8 +1,11 @@
 # coding: utf-8
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
-
-from oci.util import formatted_flat_dict, NONE_SENTINEL, value_allowed_none_or_none_sentinel  # noqa: F401
+from oci.util import (
+    formatted_flat_dict,
+    NONE_SENTINEL,
+    value_allowed_none_or_none_sentinel,
+)  # noqa: F401
 from oci.decorators import init_model_state_from_kwargs
 
 
@@ -35,17 +38,17 @@ class ManagedPrefixCollection(object):
 
         """
         self.swagger_types = {
-            'items': 'list[ManagedPrefixSummary]',
-            'fs_uri': 'str',
-            'service_namespace': 'str',
-            'is_force_fallback_for_managed': 'bool'
+            "items": "list[ManagedPrefixSummary]",
+            "fs_uri": "str",
+            "service_namespace": "str",
+            "is_force_fallback_for_managed": "bool",
         }
 
         self.attribute_map = {
-            'items': 'items',
-            'fs_uri': 'fsUri',
-            'service_namespace': 'serviceNamespace',
-            'is_force_fallback_for_managed': 'isForceFallbackForManaged'
+            "items": "items",
+            "fs_uri": "fsUri",
+            "service_namespace": "serviceNamespace",
+            "is_force_fallback_for_managed": "isForceFallbackForManaged",
         }
 
         self._items = None

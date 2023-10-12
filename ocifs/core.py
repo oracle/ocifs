@@ -1,7 +1,6 @@
 # coding: utf-8
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
-# Licensed under the Universal Permissive License v 1.0 as shown at
-# https://oss.oracle.com/licenses/upl/
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 import os
 from ast import literal_eval
 import inspect
@@ -30,7 +29,9 @@ from oci.pagination import list_call_get_all_results
 from oci.retry import DEFAULT_RETRY_STRATEGY
 from oci._vendor.requests.structures import CaseInsensitiveDict
 from .errors import translate_oci_error
-from ocifs.data_lake.lake_sharing_object_storage_client import LakeSharingObjectStorageClient
+from ocifs.data_lake.lake_sharing_object_storage_client import (
+    LakeSharingObjectStorageClient,
+)
 from .utils import __version__
 
 
@@ -61,7 +62,11 @@ def get_mount_type(mount_spec):
         mount_type = "EXTERNAL"
     elif 3 <= len(mount_spec) <= 4:
         mount_entity_type = mount_spec[1].upper()
-        if mount_entity_type == 'DATABASE' or mount_entity_type == 'TABLE' or mount_entity_type == 'USER':
+        if (
+            mount_entity_type == "DATABASE"
+            or mount_entity_type == "TABLE"
+            or mount_entity_type == "USER"
+        ):
             mount_type = "MANAGED"
     return mount_type
 
@@ -144,22 +149,22 @@ class OCIFileSystem(AbstractFileSystem):
     root_marker = ""
     connect_timeout = 5
     read_timeout = 15
-    default_block_size = 5 * 2 ** 20
+    default_block_size = 5 * 2**20
     protocol = ["oci", "ocilake"]
 
     def __init__(
-            self,
-            config: Union[dict, str, None] = None,
-            signer: Union[AbstractBaseSigner, None] = None,
-            profile: str = None,
-            iam_type: str = None,
-            region: str = None,
-            default_block_size: int = None,
-            default_cache_type: str = "bytes",
-            default_cache_options: dict = None,
-            config_kwargs: dict = None,
-            oci_additional_kwargs: dict = None,
-            **kwargs,
+        self,
+        config: Union[dict, str, None] = None,
+        signer: Union[AbstractBaseSigner, None] = None,
+        profile: str = None,
+        iam_type: str = None,
+        region: str = None,
+        default_block_size: int = None,
+        default_cache_type: str = "bytes",
+        default_cache_options: dict = None,
+        config_kwargs: dict = None,
+        oci_additional_kwargs: dict = None,
+        **kwargs,
     ):
         self.kwargs = kwargs or dict()
         self.default_block_size = default_block_size or self.default_block_size
@@ -183,7 +188,7 @@ class OCIFileSystem(AbstractFileSystem):
         self.default_cache_type = default_cache_type
 
     def _get_oci_method_kwargs(
-            self, method, is_detail_method=False, *akwarglist, **kwargs
+        self, method, is_detail_method=False, *akwarglist, **kwargs
     ):
         """
         This method handles combining and resolving conflicts between all of the args and
@@ -245,7 +250,7 @@ class OCIFileSystem(AbstractFileSystem):
         import pkg_resources
 
         assert (
-                "oci-cli" in pkg_resources.working_set.by_key.keys()
+            "oci-cli" in pkg_resources.working_set.by_key.keys()
         ), "Must download oci-cli to use sync: https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm#Quickstart"
 
         if self.is_local_path(src_dir):
@@ -334,11 +339,14 @@ class OCIFileSystem(AbstractFileSystem):
             mount_type = get_mount_type(mount_spc_information)
             logger.debug(f"mount_type:: {mount_type}")
             if not mount_type:
-                raise ValueError('mount path mentioned in ocifs URI is invalid.Please check the URI format!!!')
-            bucket_namespace_map = self.oci_client.get_bucket_namespace_for_given_mount_name(lake_ocid,
-                                                                                             mount_spc_information,
-                                                                                             mount_type,
-                                                                                             **kwargs)
+                raise ValueError(
+                    "mount path mentioned in ocifs URI is invalid.Please check the URI format!!!"
+                )
+            bucket_namespace_map = (
+                self.oci_client.get_bucket_namespace_for_given_mount_name(
+                    lake_ocid, mount_spc_information, mount_type, **kwargs
+                )
+            )
             bucket = bucket_namespace_map.get("bucket_name")
             namespace = bucket_namespace_map.get("namespace")
         else:
@@ -376,7 +384,9 @@ class OCIFileSystem(AbstractFileSystem):
         )
         self._get_region()
         try:
-            self.oci_client = LakeSharingObjectStorageClient(self.config, **self.config_kwargs)
+            self.oci_client = LakeSharingObjectStorageClient(
+                self.config, **self.config_kwargs
+            )
             logger.debug(
                 f"Lakesharing Object Storage Client is being set up for supporting data lake support and "
                 f"interacting with object storage using the config passed in: {self.config}"
@@ -701,7 +711,7 @@ class OCIFileSystem(AbstractFileSystem):
             (defaults region of your config)
 
         """
-        gb50 = 50 * 2 ** 30
+        gb50 = 50 * 2**30
         dest_region = destination_region or self.region
         if not dest_region:
             raise ValueError(
@@ -756,11 +766,11 @@ class OCIFileSystem(AbstractFileSystem):
                     # Check for subdirectories
                     try:
                         if self._call_oci(
-                                self.oci_client.list_objects,
-                                namespace_name=namespace,
-                                bucket_name=bucket,
-                                prefix=key.rstrip("/") + "/",
-                                limit=1,
+                            self.oci_client.list_objects,
+                            namespace_name=namespace,
+                            bucket_name=bucket,
+                            prefix=key.rstrip("/") + "/",
+                            limit=1,
                         ).data.objects:
                             generic_dir
                             return generic_dir
@@ -818,11 +828,11 @@ class OCIFileSystem(AbstractFileSystem):
         return self.info(path, **kwargs)
 
     def mkdir(
-            self,
-            path: str,
-            create_parents: bool = True,
-            compartment_id: str = None,
-            **kwargs,
+        self,
+        path: str,
+        create_parents: bool = True,
+        compartment_id: str = None,
+        **kwargs,
     ):
         """Make a new bucket or folder
 
@@ -1111,15 +1121,15 @@ class OCIFileSystem(AbstractFileSystem):
                 self.config_kwargs.get("signer").refresh_security_token()
 
     def open(
-            self,
-            path: str,
-            mode: str = "rb",
-            block_size: int = None,
-            cache_options: dict = None,
-            compression: str = None,
-            cache_type: str = None,
-            autocommit: bool = True,
-            **kwargs,
+        self,
+        path: str,
+        mode: str = "rb",
+        block_size: int = None,
+        cache_options: dict = None,
+        compression: str = None,
+        cache_type: str = None,
+        autocommit: bool = True,
+        **kwargs,
     ):
         """Open a file for reading or writing
 
@@ -1163,14 +1173,14 @@ class OCIFileSystem(AbstractFileSystem):
         )
 
     def _open(
-            self,
-            path: str,
-            mode: str = "rb",
-            block_size: int = None,
-            autocommit: bool = True,
-            cache_options: dict = None,
-            cache_type: str = None,
-            **kwargs,
+        self,
+        path: str,
+        mode: str = "rb",
+        block_size: int = None,
+        autocommit: bool = True,
+        cache_options: dict = None,
+        cache_type: str = None,
+        **kwargs,
     ):
         """Open a file for reading or writing
 
@@ -1282,24 +1292,26 @@ class OCIFile(AbstractBufferedFile):
     """
 
     retries = 5
-    MINIMUM_BLOCK_SIZE = 5 * 2 ** 20
-    MAXIMUM_BLOCK_SIZE = 5 * 2 ** 30
+    MINIMUM_BLOCK_SIZE = 5 * 2**20
+    MAXIMUM_BLOCK_SIZE = 5 * 2**30
 
     def __init__(
-            self,
-            fs: OCIFileSystem,
-            path: str,
-            mode: str = "rb",
-            block_size: int = MINIMUM_BLOCK_SIZE,
-            autocommit: bool = True,
-            cache_type: str = "bytes",
-            cache_options: dict = None,
-            additional_kwargs: dict = None,
-            size: int = None,
-            **kwargs,
+        self,
+        fs: OCIFileSystem,
+        path: str,
+        mode: str = "rb",
+        block_size: int = MINIMUM_BLOCK_SIZE,
+        autocommit: bool = True,
+        cache_type: str = "bytes",
+        cache_options: dict = None,
+        additional_kwargs: dict = None,
+        size: int = None,
+        **kwargs,
     ):
         self.bucket, self.namespace, self.key = fs.split_path(path)
-        self.path = _build_full_path(bucket=self.bucket, namespace=self.namespace, key=self.key, **kwargs)
+        self.path = _build_full_path(
+            bucket=self.bucket, namespace=self.namespace, key=self.key, **kwargs
+        )
         if not self.key:
             raise ValueError("Attempt to open non key-like path: %s" % path)
 

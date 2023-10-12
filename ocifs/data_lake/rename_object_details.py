@@ -1,9 +1,11 @@
 # coding: utf-8
-# Copyright (c) 2016, 2023, Oracle and/or its affiliates.  All rights reserved.
-# This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
-
-
-from oci.util import formatted_flat_dict, NONE_SENTINEL, value_allowed_none_or_none_sentinel  # noqa: F401
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+from oci.util import (
+    formatted_flat_dict,
+    NONE_SENTINEL,
+    value_allowed_none_or_none_sentinel,
+)  # noqa: F401
 from oci.decorators import init_model_state_from_kwargs
 
 
@@ -40,19 +42,19 @@ class RenameObjectDetails(object):
 
         """
         self.swagger_types = {
-            'source_name': 'str',
-            'new_name': 'str',
-            'src_obj_if_match_e_tag': 'str',
-            'new_obj_if_match_e_tag': 'str',
-            'new_obj_if_none_match_e_tag': 'str'
+            "source_name": "str",
+            "new_name": "str",
+            "src_obj_if_match_e_tag": "str",
+            "new_obj_if_match_e_tag": "str",
+            "new_obj_if_none_match_e_tag": "str",
         }
 
         self.attribute_map = {
-            'source_name': 'sourceName',
-            'new_name': 'newName',
-            'src_obj_if_match_e_tag': 'srcObjIfMatchETag',
-            'new_obj_if_match_e_tag': 'newObjIfMatchETag',
-            'new_obj_if_none_match_e_tag': 'newObjIfNoneMatchETag'
+            "source_name": "sourceName",
+            "new_name": "newName",
+            "src_obj_if_match_e_tag": "srcObjIfMatchETag",
+            "new_obj_if_match_e_tag": "newObjIfMatchETag",
+            "new_obj_if_none_match_e_tag": "newObjIfNoneMatchETag",
         }
 
         self._source_name = None

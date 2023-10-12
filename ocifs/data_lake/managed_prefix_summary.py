@@ -1,8 +1,11 @@
 # coding: utf-8
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
-
-from oci.util import formatted_flat_dict, NONE_SENTINEL, value_allowed_none_or_none_sentinel  # noqa: F401
+from oci.util import (
+    formatted_flat_dict,
+    NONE_SENTINEL,
+    value_allowed_none_or_none_sentinel,
+)  # noqa: F401
 from oci.decorators import init_model_state_from_kwargs
 
 
@@ -22,13 +25,9 @@ class ManagedPrefixSummary(object):
         :type prefix_path: str
 
         """
-        self.swagger_types = {
-            'prefix_path': 'str'
-        }
+        self.swagger_types = {"prefix_path": "str"}
 
-        self.attribute_map = {
-            'prefix_path': 'prefixPath'
-        }
+        self.attribute_map = {"prefix_path": "prefixPath"}
 
         self._prefix_path = None
 

@@ -21,7 +21,9 @@ from oci.exceptions import (
 )
 from copy import deepcopy
 
-from ocifs.data_lake.lake_sharing_object_storage_client import LakeSharingObjectStorageClient
+from ocifs.data_lake.lake_sharing_object_storage_client import (
+    LakeSharingObjectStorageClient,
+)
 
 namespace_name = os.environ["OCIFS_TEST_NAMESPACE"]
 test_bucket_name = os.environ["OCIFS_TEST_BUCKET"]

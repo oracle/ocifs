@@ -1,9 +1,11 @@
 # coding: utf-8
-# Copyright (c) 2016, 2023, Oracle and/or its affiliates.  All rights reserved.
-# This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
-
-
-from oci.util import formatted_flat_dict, NONE_SENTINEL, value_allowed_none_or_none_sentinel  # noqa: F401
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+from oci.util import (
+    formatted_flat_dict,
+    NONE_SENTINEL,
+    value_allowed_none_or_none_sentinel,
+)  # noqa: F401
 from oci.decorators import init_model_state_from_kwargs
 
 
@@ -118,55 +120,55 @@ class LakeMount(object):
 
         """
         self.swagger_types = {
-            'key': 'str',
-            'display_name': 'str',
-            'is_operation_pending': 'bool',
-            'mount_type': 'str',
-            'storage_type': 'str',
-            'access_type': 'str',
-            'mount_spec': 'MountSpecification',
-            'credentials': 'str',
-            'encryption': 'str',
-            'mount_options': 'str',
-            'permissions': 'list[PermissionLine]',
-            'time_created': 'datetime',
-            'time_updated': 'datetime',
-            'created_by': 'str',
-            'is_assigned': 'bool',
-            'lifecycle_state': 'str',
-            'lifecycle_details': 'str',
-            'description': 'str',
-            'lake_id': 'str',
-            'compartment_id': 'str',
-            'freeform_tags': 'dict(str, str)',
-            'defined_tags': 'dict(str, dict(str, object))',
-            'system_tags': 'dict(str, dict(str, object))'
+            "key": "str",
+            "display_name": "str",
+            "is_operation_pending": "bool",
+            "mount_type": "str",
+            "storage_type": "str",
+            "access_type": "str",
+            "mount_spec": "MountSpecification",
+            "credentials": "str",
+            "encryption": "str",
+            "mount_options": "str",
+            "permissions": "list[PermissionLine]",
+            "time_created": "datetime",
+            "time_updated": "datetime",
+            "created_by": "str",
+            "is_assigned": "bool",
+            "lifecycle_state": "str",
+            "lifecycle_details": "str",
+            "description": "str",
+            "lake_id": "str",
+            "compartment_id": "str",
+            "freeform_tags": "dict(str, str)",
+            "defined_tags": "dict(str, dict(str, object))",
+            "system_tags": "dict(str, dict(str, object))",
         }
 
         self.attribute_map = {
-            'key': 'key',
-            'display_name': 'displayName',
-            'is_operation_pending': 'isOperationPending',
-            'mount_type': 'mountType',
-            'storage_type': 'storageType',
-            'access_type': 'accessType',
-            'mount_spec': 'mountSpec',
-            'credentials': 'credentials',
-            'encryption': 'encryption',
-            'mount_options': 'mountOptions',
-            'permissions': 'permissions',
-            'time_created': 'timeCreated',
-            'time_updated': 'timeUpdated',
-            'created_by': 'createdBy',
-            'is_assigned': 'isAssigned',
-            'lifecycle_state': 'lifecycleState',
-            'lifecycle_details': 'lifecycleDetails',
-            'description': 'description',
-            'lake_id': 'lakeId',
-            'compartment_id': 'compartmentId',
-            'freeform_tags': 'freeformTags',
-            'defined_tags': 'definedTags',
-            'system_tags': 'systemTags'
+            "key": "key",
+            "display_name": "displayName",
+            "is_operation_pending": "isOperationPending",
+            "mount_type": "mountType",
+            "storage_type": "storageType",
+            "access_type": "accessType",
+            "mount_spec": "mountSpec",
+            "credentials": "credentials",
+            "encryption": "encryption",
+            "mount_options": "mountOptions",
+            "permissions": "permissions",
+            "time_created": "timeCreated",
+            "time_updated": "timeUpdated",
+            "created_by": "createdBy",
+            "is_assigned": "isAssigned",
+            "lifecycle_state": "lifecycleState",
+            "lifecycle_details": "lifecycleDetails",
+            "description": "description",
+            "lake_id": "lakeId",
+            "compartment_id": "compartmentId",
+            "freeform_tags": "freeformTags",
+            "defined_tags": "definedTags",
+            "system_tags": "systemTags",
         }
 
         self._key = None
@@ -576,7 +578,7 @@ class LakeMount(object):
         """
         allowed_values = ["ACTIVE"]
         if not value_allowed_none_or_none_sentinel(lifecycle_state, allowed_values):
-            lifecycle_state = 'UNKNOWN_ENUM_VALUE'
+            lifecycle_state = "UNKNOWN_ENUM_VALUE"
         self._lifecycle_state = lifecycle_state
 
     @property

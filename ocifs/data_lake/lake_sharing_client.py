@@ -1,5 +1,5 @@
 # coding: utf-8
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 import logging
 import os
@@ -10,7 +10,11 @@ from oci.base_client import BaseClient
 from oci import retry, circuit_breaker  # noqa: F401
 from oci.config import get_config_value_or_default, validate_config
 from oci.signer import Signer
-from oci.util import Sentinel, get_signer_from_authentication_type, AUTHENTICATION_TYPE_FIELD_NAME
+from oci.util import (
+    Sentinel,
+    get_signer_from_authentication_type,
+    AUTHENTICATION_TYPE_FIELD_NAME,
+)
 from ocifs.errors import translate_oci_error
 
 from .managed_prefix_collection import ManagedPrefixCollection
@@ -24,7 +28,7 @@ missing = Sentinel("Missing")
 lakesharing_type_mapping = {
     "ManagedPrefixCollection": ManagedPrefixCollection,
     "ManagedPrefixSummary": ManagedPrefixSummary,
-    "ParResponse": ParResponse
+    "ParResponse": ParResponse,
 }
 
 logger = logging.getLogger("lakesharingClient")
@@ -51,7 +55,9 @@ class LakeSharingClient(object):
     A description of the Lakesharing API.
     """
 
-    def __init__(self, config, oci_lake_sharing_service_api_endpoint: str = None, **kwargs):
+    def __init__(
+        self, config, oci_lake_sharing_service_api_endpoint: str = None, **kwargs
+    ):
         """
         Creates a new service client
 
@@ -87,9 +93,9 @@ class LakeSharingClient(object):
             This should be one of the strategies available in the :py:mod:`~oci.retry` module. A convenience :py:data:`~oci.retry.DEFAULT_RETRY_STRATEGY`
             is also available. The specifics of the default retry strategy are described `here <https://oracle-cloud-infrastructure-python-sdk.readthedocs.io/en/latest/sdk_behaviors/retries.html>`__.
         """
-        validate_config(config, signer=kwargs.get('signer'))
-        if 'signer' in kwargs:
-            signer = kwargs['signer']
+        validate_config(config, signer=kwargs.get("signer"))
+        if "signer" in kwargs:
+            signer = kwargs["signer"]
 
         elif AUTHENTICATION_TYPE_FIELD_NAME in config:
             signer = get_signer_from_authentication_type(config)
@@ -101,29 +107,42 @@ class LakeSharingClient(object):
                 fingerprint=config["fingerprint"],
                 private_key_file_location=config.get("key_file"),
                 pass_phrase=get_config_value_or_default(config, "pass_phrase"),
-                private_key_content=config.get("key_content")
+                private_key_content=config.get("key_content"),
             )
-        self.oci_lake_sharing_service_api_endpoint = oci_lake_sharing_service_api_endpoint
+        self.oci_lake_sharing_service_api_endpoint = (
+            oci_lake_sharing_service_api_endpoint
+        )
         base_client_init_kwargs = {
-            'regional_client': True,
-            'service_endpoint': self.oci_lake_sharing_service_api_endpoint,
-            'base_path': '/20180828',
-            'service_endpoint_template': 'https://lakesharing.{region}.oci.{secondLevelDomain}',
-            'endpoint_service_name': 'lake_sharing',
-            'skip_deserialization': kwargs.get('skip_deserialization', False),
-            'circuit_breaker_strategy': kwargs.get('circuit_breaker_strategy',
-                                                   circuit_breaker.GLOBAL_CIRCUIT_BREAKER_STRATEGY)
+            "regional_client": True,
+            "service_endpoint": self.oci_lake_sharing_service_api_endpoint,
+            "base_path": "/20180828",
+            "service_endpoint_template": "https://lakesharing.{region}.oci.{secondLevelDomain}",
+            "endpoint_service_name": "lake_sharing",
+            "skip_deserialization": kwargs.get("skip_deserialization", False),
+            "circuit_breaker_strategy": kwargs.get(
+                "circuit_breaker_strategy",
+                circuit_breaker.GLOBAL_CIRCUIT_BREAKER_STRATEGY,
+            ),
         }
-        if 'timeout' in kwargs:
-            base_client_init_kwargs['timeout'] = kwargs.get('timeout')
-        if base_client_init_kwargs.get('circuit_breaker_strategy') is None:
-            base_client_init_kwargs['circuit_breaker_strategy'] = circuit_breaker.DEFAULT_CIRCUIT_BREAKER_STRATEGY
-        if 'allow_control_chars' in kwargs:
-            base_client_init_kwargs['allow_control_chars'] = kwargs.get('allow_control_chars')
-        self.retry_strategy = kwargs.get('retry_strategy')
-        self.circuit_breaker_callback = kwargs.get('circuit_breaker_callback')
-        self.base_client = BaseClient("lake_sharing", config, signer, lakesharing_type_mapping,
-                                      **base_client_init_kwargs)
+        if "timeout" in kwargs:
+            base_client_init_kwargs["timeout"] = kwargs.get("timeout")
+        if base_client_init_kwargs.get("circuit_breaker_strategy") is None:
+            base_client_init_kwargs[
+                "circuit_breaker_strategy"
+            ] = circuit_breaker.DEFAULT_CIRCUIT_BREAKER_STRATEGY
+        if "allow_control_chars" in kwargs:
+            base_client_init_kwargs["allow_control_chars"] = kwargs.get(
+                "allow_control_chars"
+            )
+        self.retry_strategy = kwargs.get("retry_strategy")
+        self.circuit_breaker_callback = kwargs.get("circuit_breaker_callback")
+        self.base_client = BaseClient(
+            "lake_sharing",
+            config,
+            signer,
+            lakesharing_type_mapping,
+            **base_client_init_kwargs,
+        )
 
     def delete_object(self, namespace, bucket, object, **kwargs):
         """
@@ -175,12 +194,12 @@ class LakeSharingClient(object):
         """
         resource_path = "/deleteObject"
         method = "POST"
+        query_params = {"namespace": namespace, "bucket": bucket, "object": object}
         query_params = {
-            "namespace": namespace,
-            "bucket": bucket,
-            "object": object
+            k: v
+            for (k, v) in six.iteritems(query_params)
+            if v is not missing and v is not None
         }
-        query_params = {k: v for (k, v) in six.iteritems(query_params) if v is not missing and v is not None}
 
         header_params = {
             "accept": "application/json",
@@ -188,10 +207,18 @@ class LakeSharingClient(object):
             "opc-request-id": kwargs.get("opc_request_id", missing),
             "if-match": kwargs.get("if_match", missing),
             "opc-retry-token": kwargs.get("opc_retry_token", missing),
-            "lakeshare-client-resource-family": kwargs.get("lakeshare_client_resource_family", missing),
-            "lakeshare-client-resource-ocid": kwargs.get("lakeshare_client_resource_ocid", missing)
+            "lakeshare-client-resource-family": kwargs.get(
+                "lakeshare_client_resource_family", missing
+            ),
+            "lakeshare-client-resource-ocid": kwargs.get(
+                "lakeshare_client_resource_ocid", missing
+            ),
         }
-        header_params = {k: v for (k, v) in six.iteritems(header_params) if v is not missing and v is not None}
+        header_params = {
+            k: v
+            for (k, v) in six.iteritems(header_params)
+            if v is not missing and v is not None
+        }
 
         delete_object_response = None
         try:
@@ -201,13 +228,15 @@ class LakeSharingClient(object):
                     resource_path=resource_path,
                     method=method,
                     query_params=query_params,
-                    header_params=header_params)
+                    header_params=header_params,
+                )
             else:
                 delete_object_response = self.base_client.call_api(
                     resource_path=resource_path,
                     method=method,
                     query_params=query_params,
-                    header_params=header_params)
+                    header_params=header_params,
+                )
             logger.debug(
                 "Deleting object from the lakesharing server"
                 " for the given lake namespace: "
@@ -274,21 +303,33 @@ class LakeSharingClient(object):
             "namespace": namespace,
             "bucket": bucket,
             "x_oci_lakeshare_op": access_type,
-            "object": object_name
+            "object": object_name,
         }
-        query_params = {k: v for (k, v) in six.iteritems(query_params) if v is not missing and v is not None}
+        query_params = {
+            k: v
+            for (k, v) in six.iteritems(query_params)
+            if v is not missing and v is not None
+        }
 
         header_params = {
             "accept": "application/json",
             "content-type": "application/json",
             "x-oci-lakeshare-op": access_type,
             "object": object_name,
-            "lakeshare-client-resource-family": kwargs.get("lakeshare_client_resource_family", missing),
-            "lakeshare-client-resource-ocid": kwargs.get("lakeshare_client_resource_ocid", missing),
-            "opc-request-id": kwargs.get("opc_request_id", missing)
+            "lakeshare-client-resource-family": kwargs.get(
+                "lakeshare_client_resource_family", missing
+            ),
+            "lakeshare-client-resource-ocid": kwargs.get(
+                "lakeshare_client_resource_ocid", missing
+            ),
+            "opc-request-id": kwargs.get("opc_request_id", missing),
         }
 
-        header_params = {k: v for (k, v) in six.iteritems(header_params) if v is not missing and v is not None}
+        header_params = {
+            k: v
+            for (k, v) in six.iteritems(header_params)
+            if v is not missing and v is not None
+        }
         par_response = None
 
         try:
@@ -299,14 +340,16 @@ class LakeSharingClient(object):
                     method=method,
                     query_params=query_params,
                     header_params=header_params,
-                    response_type="ParResponse")
+                    response_type="ParResponse",
+                )
             else:
                 par_response = self.base_client.call_api(
                     resource_path=resource_path,
                     method=method,
                     query_params=query_params,
                     header_params=header_params,
-                    response_type="ParResponse")
+                    response_type="ParResponse",
+                )
             logger.debug(
                 f" PAR response:{par_response.data}"
                 f",PAR response status:{par_response.status}"
@@ -345,24 +388,31 @@ class LakeSharingClient(object):
         method = "GET"
         header_params = {
             "accept": "application/json",
-            "content-type": "application/json"
+            "content-type": "application/json",
         }
 
         lake_sharing_health_check_response = None
         oci_lake_sharing_service_health_status = False
         try:
             if self.retry_strategy:
-                lake_sharing_health_check_response = self.retry_strategy.make_retrying_call(
-                    self.base_client.call_api,
-                    resource_path=resource_path,
-                    method=method,
-                    header_params=header_params)
+                lake_sharing_health_check_response = (
+                    self.retry_strategy.make_retrying_call(
+                        self.base_client.call_api,
+                        resource_path=resource_path,
+                        method=method,
+                        header_params=header_params,
+                    )
+                )
             else:
                 lake_sharing_health_check_response = self.base_client.call_api(
                     resource_path=resource_path,
                     method=method,
-                    header_params=header_params)
-            if lake_sharing_health_check_response and lake_sharing_health_check_response.status == 200:
+                    header_params=header_params,
+                )
+            if (
+                lake_sharing_health_check_response
+                and lake_sharing_health_check_response.status == 200
+            ):
                 oci_lake_sharing_service_health_status = True
         except Exception as excep:
             logger.error(
@@ -415,37 +465,55 @@ class LakeSharingClient(object):
             "namespace": namespace,
             "bucket": bucket,
             "limit": kwargs.get("limit", missing),
-            "page": kwargs.get("page", missing)
+            "page": kwargs.get("page", missing),
         }
-        query_params = {k: v for (k, v) in six.iteritems(query_params) if v is not missing and v is not None}
+        query_params = {
+            k: v
+            for (k, v) in six.iteritems(query_params)
+            if v is not missing and v is not None
+        }
 
         header_params = {
             "accept": "application/json",
             "content-type": "application/json",
             "opc-request-id": kwargs.get("opc_request_id", missing),
-            "lakeshare-client-resource-family": kwargs.get("lakeshare_client_resource_family", missing),
-            "lakeshare-client-resource-ocid": kwargs.get("lakeshare_client_resource_ocid", missing)
+            "lakeshare-client-resource-family": kwargs.get(
+                "lakeshare_client_resource_family", missing
+            ),
+            "lakeshare-client-resource-ocid": kwargs.get(
+                "lakeshare_client_resource_ocid", missing
+            ),
         }
-        header_params = {k: v for (k, v) in six.iteritems(header_params) if v is not missing and v is not None}
+        header_params = {
+            k: v
+            for (k, v) in six.iteritems(header_params)
+            if v is not missing and v is not None
+        }
         managed_prefix_collection_response = None
         managed_prefix_collection_response_data = None
         try:
             if self.retry_strategy:
-                managed_prefix_collection_response = self.retry_strategy.make_retrying_call(
-                    self.base_client.call_api,
-                    resource_path=resource_path,
-                    method=method,
-                    query_params=query_params,
-                    header_params=header_params,
-                    response_type="ManagedPrefixCollection")
+                managed_prefix_collection_response = (
+                    self.retry_strategy.make_retrying_call(
+                        self.base_client.call_api,
+                        resource_path=resource_path,
+                        method=method,
+                        query_params=query_params,
+                        header_params=header_params,
+                        response_type="ManagedPrefixCollection",
+                    )
+                )
             else:
                 managed_prefix_collection_response = self.base_client.call_api(
                     resource_path=resource_path,
                     method=method,
                     query_params=query_params,
                     header_params=header_params,
-                    response_type="ManagedPrefixCollection")
-            managed_prefix_collection_response_data = managed_prefix_collection_response.data
+                    response_type="ManagedPrefixCollection",
+                )
+            managed_prefix_collection_response_data = (
+                managed_prefix_collection_response.data
+            )
             logger.debug(
                 f"managed_prefix_collection_response data:{managed_prefix_collection_response.data}"
                 f",managed_prefix_collection_response status:{managed_prefix_collection_response.status}"
@@ -463,7 +531,9 @@ class LakeSharingClient(object):
             raise translate_oci_error(excep) from excep
         return managed_prefix_collection_response_data
 
-    def rename_object(self, rename_object_details: RenameObjectDetails, namespace, bucket, **kwargs):
+    def rename_object(
+        self, rename_object_details: RenameObjectDetails, namespace, bucket, **kwargs
+    ):
         """
         Renames a object in a particular bucket in tenancy namespace
 
@@ -505,39 +575,50 @@ class LakeSharingClient(object):
         """
         resource_path = "/renameObject"
         method = "POST"
+        query_params = {"namespace": namespace, "bucket": bucket}
         query_params = {
-            "namespace": namespace,
-            "bucket": bucket
+            k: v
+            for (k, v) in six.iteritems(query_params)
+            if v is not missing and v is not None
         }
-        query_params = {k: v for (k, v) in six.iteritems(query_params) if v is not missing and v is not None}
 
         header_params = {
             "accept": "application/json",
             "content-type": "application/json",
             "opc-request-id": kwargs.get("opc_request_id", missing),
             "if-match": kwargs.get("if_match", missing),
-            "lakeshare-client-resource-family": kwargs.get("lakeshare_client_resource_family", missing),
-            "lakeshare-client-resource-ocid": kwargs.get("lakeshare_client_resource_ocid", missing)
+            "lakeshare-client-resource-family": kwargs.get(
+                "lakeshare_client_resource_family", missing
+            ),
+            "lakeshare-client-resource-ocid": kwargs.get(
+                "lakeshare_client_resource_ocid", missing
+            ),
         }
-        header_params = {k: v for (k, v) in six.iteritems(header_params) if v is not missing and v is not None}
+        header_params = {
+            k: v
+            for (k, v) in six.iteritems(header_params)
+            if v is not missing and v is not None
+        }
 
         rename_object_response = None
         try:
             if self.retry_strategy:
                 rename_object_response = self.retry_strategy.make_retrying_call(
-                self.base_client.call_api,
-                resource_path=resource_path,
-                method=method,
-                query_params=query_params,
-                header_params=header_params,
-                body=rename_object_details)
+                    self.base_client.call_api,
+                    resource_path=resource_path,
+                    method=method,
+                    query_params=query_params,
+                    header_params=header_params,
+                    body=rename_object_details,
+                )
             else:
                 rename_object_response = self.base_client.call_api(
-                resource_path=resource_path,
-                method=method,
-                query_params=query_params,
-                header_params=header_params,
-                body=rename_object_details)
+                    resource_path=resource_path,
+                    method=method,
+                    query_params=query_params,
+                    header_params=header_params,
+                    body=rename_object_details,
+                )
             logger.debug(
                 "Renaming object from the lakesharing server"
                 " for the given lake namespace: "
