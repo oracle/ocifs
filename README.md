@@ -22,55 +22,55 @@ from ocifs import OCIFileSystem
 
 fs = OCIFilesystem("~/.oci/config")
 # 1.Create empty file or truncate in OCI objectstorage bucket
- fs.touch("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", truncate=True, data=b"Welcome to non Data Lake!")
+ fs.touch("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", truncate=True, data=b"Writing to Object Storage!")
  # 2.Fetch(potentially multiple paths' contents
  fs.cat("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt")
  # 3.Get metadata about a file from a head or list call
- fs.info("o<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt")
+ fs.info("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt")
  # 4.Get directory listing page
- fs.ls("<my_bucket>@<my_namespace>/<my_prefix>/", detail=True)
+ fs.ls("oci://<my_bucket>@<my_namespace>/<my_prefix>/", detail=True)
  # 5.Is this entry directory-like?
- fs.isdir("<my_bucket>@<my_namespace>")
+ fs.isdir("oci://<my_bucket>@<my_namespace>")
  # 6.Is this entry file-like?
- fs.isfile("<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt")
+ fs.isfile("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt")
  # 7.If there is a file at the given path (including broken links)
- fs.lexists("<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt")
+ fs.lexists("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt")
  # 8.List of files for the given path
- fs.listdir("<my_bucket>@<my_namespace>/<my_prefix>", detail=True)
+ fs.listdir("oci://<my_bucket>@<my_namespace>/<my_prefix>", detail=True)
  # 9.Get the first ``size`` bytes from file
- fs.head("<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", size=1024)
+ fs.head("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", size=1024)
  # 10.Get the last ``size`` bytes from file
- fs.tail("<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", size=1024)
+ fs.tail("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", size=1024)
  # 11.Hash of file properties, to tell if it has changed
- fs.ukey("<my_bucket>@<my_namespace>/<my_prefix>/hello4.txt")
+ fs.ukey("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello4.txt")
  # 12.Size in bytes of file
- fs.size("<my_bucket>@<my_namespace>/<my_prefix>/hello4.txt")
+ fs.size("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello4.txt")
  # 13.Size in bytes of each file in a list of paths
- paths = ["<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", "<my_bucket>@<my_namespace>/<my_prefix>/hello3.txt"]
+ paths = ["oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", "<my_bucket>@<my_namespace>/<my_prefix>/hello3.txt"]
  fs.sizes(paths)
  # 14.Normalise OCI path string into bucket and key.
- fs.split_path("<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt")
+ fs.split_path("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt")
  # 15.Delete  a file from the  bucket
- fs.rm("<my_bucket>@<my_namespace>/<my_prefix>/hello10.txt")
+ fs.rm("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello10.txt")
  # 16.Get the contents of the file as a byte
- fs.read_bytes("<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", start=0, end=13)
+ fs.read_bytes("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", start=0, end=13)
  # 17.Get the contents of the file as a string
- fs.read_text("<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", encoding=None, errors=None, newline=None)
+ fs.read_text("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", encoding=None, errors=None, newline=None)
  # 18.Get the contents of the file as a byte
- fs.read_block("<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", 0, 13)
+ fs.read_block("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", 0, 13)
  # 19.Open a file for writing/flushing into file in OCI objectstorage bucket
- with fs.open("<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", 'w', autocommit=True) as f:
-        f.write("Welcome to Data Lake in Oracle!!!!!!!") # data is flushed and file closed
+ with fs.open("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt", 'w', autocommit=True) as f:
+        f.write("Writing data to buffer, before manually flushing and closing.") # data is flushed and file closed
         f.flush()
  # 20.Open a file for reading a file from OCI objectstorage bucket
- with fs.open("<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt") as f:
+ with fs.open("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt") as f:
         print(f.read())
  # 21.Space used by files and optionally directories within a path
- fs.du('<my_bucket>@<my_namespace>/<my_prefix>/lakesharing10.csv')
+ fs.du("oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing10.csv")
  # 22.Find files by glob-matching.
- fs.glob("<my_bucket>@<my_namespace>/<my_prefix>/*.txt")
+ fs.glob("oci://<my_bucket>@<my_namespace>/<my_prefix>/*.txt")
  # 23.Delete multiple files from the same bucket
- pathlist = ["<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt"]
+ pathlist = ["oci://<my_bucket>@<my_namespace>/<my_prefix>/lakesharing.txt"]
  fs.bulk_delete(pathlist)
 
 ```
