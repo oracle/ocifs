@@ -32,6 +32,8 @@ from .errors import translate_oci_error
 from ocifs.data_lake.lake_sharing_object_storage_client import (
     LakeSharingObjectStorageClient,
 )
+from ocifs.data_lake.rename_object_details import RenameObjectDetails
+
 from .utils import __version__
 
 
@@ -340,7 +342,7 @@ class OCIFileSystem(AbstractFileSystem):
             logger.debug(f"mount_type:: {mount_type}")
             if not mount_type:
                 raise ValueError(
-                    "mount path mentioned in ocifs URI is invalid.Please check the URI format!!!"
+                    "The path provided looks like Data Lake, but the mount type cannot be determined in URI. Please check the URI."
                 )
             bucket_namespace_map = (
                 self.oci_client.get_bucket_namespace_for_given_mount_name(
@@ -734,6 +736,39 @@ class OCIFileSystem(AbstractFileSystem):
                     f"copy does not support files over 50gb. Got the error {e}"
                 )
             raise e
+
+    def rename(self, path1, path2, **kwargs):
+        """Renames an object in a particular bucket in tenancy namespace on OCI
+        Parameters
+        ----------
+        path1 : str
+            URI of source object path
+        path2 : str
+            URI of destination object path
+        """
+        source_path = path1
+        path_sans_protocol = self._strip_protocol(source_path)
+        full_bucket, _, obj_path = path_sans_protocol.partition("/")
+        bucket1, namespace1, source_name = self.split_path(path1)
+        bucket2, namespace2, new_name = self.split_path(path2)
+        if bucket1 != bucket2 or namespace1 != namespace2:
+            raise ValueError(
+                "Rename an object is not allowed between different bucket or namespace"
+            )
+        rename_object_body = RenameObjectDetails()
+        rename_object_body.source_name = source_name
+        rename_object_body.new_name = new_name
+        try:
+            self._call_oci(
+                self.oci_client.rename_object,
+                namespace_name=namespace1,
+                bucket_name=bucket1,
+                rename_object_details=rename_object_body,
+                **kwargs,
+            )
+        except ServiceError as e:
+            raise translate_oci_error(e) from e
+        self.invalidate_cache(path1)
 
     def info(self, path, **kwargs):
         """Get metadata about a file from a head or list call.
