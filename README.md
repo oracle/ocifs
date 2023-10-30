@@ -16,26 +16,66 @@ The [Oracle Cloud Infrastructure Object Storage](https://docs.oracle.com/en-us/i
 ​
 The `intake/filesystem_spec` project is used by [Pandas](https://pandas.pydata.org/), [Dask](https://dask.org/) and other data libraries in python, this package adds Oracle OCI Object Storage capabilties to these libraries.
 ​
-## Example Usage
+##  OCIFS file system style operations Example:
 ```python
 from ocifs import OCIFileSystem
 
 fs = OCIFilesystem("~/.oci/config")
-fs.ls("oci://<my_bucket>@<my_namespace>/<my_prefix>")
-# [<my_bucket>@<my_namespace>/<my_prefix>/obj1, <my_bucket>@<my_namespace>/<my_prefix>/obj2]
+# 1.Create empty file or truncate in OCI objectstorage bucket
+ fs.touch("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt", truncate=True, data=b"Writing to Object Storage!")
+ # 2.Fetch(potentially multiple paths' contents
+ fs.cat("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt")
+ # 3.Get metadata about a file from a head or list call
+ fs.info("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt")
+ # 4.Get directory listing page
+ fs.ls("oci://<my_bucket>@<my_namespace>/<my_prefix>/", detail=True)
+ # 5.Is this entry directory-like?
+ fs.isdir("oci://<my_bucket>@<my_namespace>")
+ # 6.Is this entry file-like?
+ fs.isfile("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt")
+ # 7.If there is a file at the given path (including broken links)
+ fs.lexists("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt")
+ # 8.List of files for the given path
+ fs.listdir("oci://<my_bucket>@<my_namespace>/<my_prefix>", detail=True)
+ # 9.Get the first ``size`` bytes from file
+ fs.head("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt", size=1024)
+ # 10.Get the last ``size`` bytes from file
+ fs.tail("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt", size=1024)
+ # 11.Hash of file properties, to tell if it has changed
+ fs.ukey("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt")
+ # 12.Size in bytes of file
+ fs.size("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt")
+ # 13.Size in bytes of each file in a list of paths
+ paths = ["oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt"]
+ fs.sizes(paths)
+ # 14.Normalise OCI path string into bucket and key.
+ fs.split_path("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt")
+ # 15.Delete  a file from the  bucket
+ fs.rm("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt")
+ # 16.Get the contents of the file as a byte
+ fs.read_bytes("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt", start=0, end=13)
+ # 17.Get the contents of the file as a string
+ fs.read_text("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt", encoding=None, errors=None, newline=None)
+ # 18.Get the contents of the file as a byte
+ fs.read_block("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt", 0, 13)
+ # 19.Open a file for writing/flushing into file in OCI objectstorage bucket
+ with fs.open("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt", 'w', autocommit=True) as f:
+        f.write("Writing data to buffer, before manually flushing and closing.") # data is flushed and file closed
+        f.flush()
+ # 20.Open a file for reading a file from OCI objectstorage bucket
+ with fs.open("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt") as f:
+        print(f.read())
+ # 21.Space used by files and optionally directories within a path
+ fs.du("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello10.csv")
+ # 22.Find files by glob-matching.
+ fs.glob("oci://<my_bucket>@<my_namespace>/<my_prefix>/*.txt")
+ # 23.Delete multiple files from the same bucket
+ pathlist = ["oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt"]
+ fs.bulk_delete(pathlist)
 
-fs.cat("oci://<my_bucket>@<my_namespace>/<my_prefix>/obj1")
-# b"Hello World"
-
-with fs.open("oci://<my_bucket>@<my_namespace>/<my_prefix>/obj3", 'w') as f:
-    f.write("Adding a third object.")
-
-fs.copy("oci://<my_bucket>@<my_namespace>/<my_prefix>/obj3", "oci://<my_bucket>@<my_namespace>/<my_prefix>/obj1")
-
-with fs.open("oci://<my_bucket>@<my_namespace>/<my_prefix>/obj1") as f:
-    print(f.read())
-# b"Adding a third object."
 ```
+
+
 
 ### Or Use With Pandas
 ​
@@ -48,6 +88,34 @@ df = pd.read_csv(
     storage_options={"config": "~/.oci/config"},
 )
 ```
+
+### Or Use With PyArrow
+​
+```python
+import pandas as pd
+import ocifs
+​
+df = pd.read_csv(
+    "oci://my_bucket@my_namespace/my_object.csv",storage_options={"config": "~/.oci/config"})
+```
+
+### Or Use With ADSDataset
+​
+```python
+import ads
+import pandas as pd
+from ads.common.auth import default_signer
+from ads.dataset.dataset import ADSDataset
+
+​
+    ads.set_auth(auth="api_key", oci_config_location="~/.oci/config", profile="<profile_name>")
+    ds = ADSDataset(
+        df=pd.read_csv(f"oci://my_bucket@my_namespace/my_object.csv", storage_options=default_signer()),
+        type_discovery=False
+    )
+    print(ds.df)
+```
+
 ​
 ## Getting Started
 ```bash
@@ -67,6 +135,12 @@ export OCIFS_CONFIG_PROFILE=DEFAULT
 Note, if you are operating on OCI with an alternative valid signer, such as resource principal, instead set the following:
 ```bash
 export OCIFS_IAM_TYPE=resource_principal
+```
+
+## Environment Variables for enabling Logging:
+To quickly see all messages, you can set the environment variable OCIFS_LOGGING_LEVEL=DEBUG.
+```bash
+export OCIFS_LOGGING_LEVEL=DEBUG
 ```
 
 ## Documentation

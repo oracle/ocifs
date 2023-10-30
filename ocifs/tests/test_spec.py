@@ -21,6 +21,10 @@ from oci.exceptions import (
 )
 from copy import deepcopy
 
+from ocifs.data_lake.lake_sharing_object_storage_client import (
+    LakeSharingObjectStorageClient,
+)
+
 namespace_name = os.environ["OCIFS_TEST_NAMESPACE"]
 test_bucket_name = os.environ["OCIFS_TEST_BUCKET"]
 security_token_profile = os.environ["OCIFS_TEST_SECURITY_TOKEN_PROFILE"]
@@ -82,7 +86,7 @@ SAFETY_SLEEP_TIME = 10
 @pytest.fixture
 def fs():
     try:
-        client = oci.object_storage.ObjectStorageClient(config)
+        client = LakeSharingObjectStorageClient(config)
     except ServiceError as e:
         raise translate_oci_error(e) from e
 
