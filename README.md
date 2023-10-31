@@ -69,8 +69,10 @@ fs = OCIFilesystem("~/.oci/config")
  fs.du("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello10.csv")
  # 22.Find files by glob-matching.
  fs.glob("oci://<my_bucket>@<my_namespace>/<my_prefix>/*.txt")
- # 23.Delete multiple files from the same bucket
- pathlist = ["oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt"]
+ # 23.Renames an object in a particular bucket in tenancy namespace on OCI
+ fs.rename("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt", "oci://<my_bucket>@<my_namespace>/<my_prefix>/hello2.txt")
+ # 24.Delete multiple files from the same bucket
+ pathlist = ["oci://<my_bucket>@<my_namespace>/<my_prefix>/hello2.txt"]
  fs.bulk_delete(pathlist)
 
 ```
