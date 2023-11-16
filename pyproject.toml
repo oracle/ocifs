@@ -19,7 +19,7 @@ build-backend = "flit_core.buildapi"
 
 # Required
 name = "ocifs"  # the install (PyPI) name
-version = "1.2.1"
+version = "1.2.2"
 
 # Optional
 description = "Convenient filesystem interface over Oracle Cloud's Object Storage"
