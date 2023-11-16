@@ -5,6 +5,21 @@ Release Notes
 .. toctree::
     :maxdepth: 2
 
+
+1.3.0
+------
+Release date: November 16, 2023
+
+* Introducing DataLake support in ocifs
+
+
+1.2.2
+------
+Release date: November 16, 2023
+
+* Fix for Windows os.path bug
+
+
 1.2.1
 -----
 Release date: March 29, 2023
