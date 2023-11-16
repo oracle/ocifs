@@ -492,7 +492,7 @@ class OCIFileSystem(AbstractFileSystem):
                     # ODSC-38899: phantom files get created, named the same as subdir
                     if f.name.endswith("/") and f.size == 0:
                         continue
-                    new_key = os.path.join(full_bucket_name, f.name)
+                    new_key = "/".join([full_bucket_name, f.name])
                     formatted_files.append(
                         CaseInsensitiveDict(
                             {
