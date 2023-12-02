@@ -6,6 +6,7 @@ from ast import literal_eval
 import inspect
 import logging
 from typing import Union  # pragma: no cover
+import mimetypes
 
 from fsspec import AbstractFileSystem
 from fsspec.utils import tokenize, stringify_path
@@ -1195,7 +1196,7 @@ class OCIFileSystem(AbstractFileSystem):
             Additional parameters used for oci methods.  Typically used for
             ServerSideEncryption.
         """
-
+        kwargs['content_type'] = kwargs.get('content_type', mimetypes.guess_type(path)[0])
         return super().open(
             path=path,
             mode=mode,
@@ -1491,7 +1492,7 @@ class OCIFile(AbstractBufferedFile):
             self.parts.append({"partNum": part, "etag": out.headers["etag"]})
 
         if self.autocommit and final:
-            self.commit()
+            self.commit(**self.kwargs)
         return not final
 
     def commit(self, **kwargs):
