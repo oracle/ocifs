@@ -818,6 +818,7 @@ class OCIFileSystem(AbstractFileSystem):
                     "name": path,
                     "type": "file",
                     "size": int(obj_data["Content-Length"]),
+                    "contentType": obj_data["Content-Type"],
                     "timeModified": obj_data["last-modified"],
                     "acceptRanges": obj_data["accept-ranges"],
                     "etag": obj_data["etag"],
