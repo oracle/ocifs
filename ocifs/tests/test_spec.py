@@ -1509,8 +1509,8 @@ def test_sync(fs):
 
     fs.rm(remote_dir, recursive=True)
 
-
-def test_content_type_image(fs):
+@pytest.mark.parametrize("isImplicit, content_type",[(True,"image/jpeg"),(False,"image/jpeg")])
+def test_content_type_image(fs,isImplicit=True, content_type=None):
     from PIL import Image
     import io
     e_path = "image.jpeg"
@@ -1519,22 +1519,49 @@ def test_content_type_image(fs):
     image = Image.new('RGBA', size=(50,50), color=(256,0,0))
     image_file = io.BytesIO(image.tobytes())
     
-    content_type = mimetypes.guess_type(e_path)[0] 
-    
-    with fs.open(e, 'wb') as f:
-        f.write(image_file.read())
-        f.flush()
-   
-    assert content_type == fs.info(a)['contentType']
- 
-def test_content_type_text(fs):
-    e_path = "f.txt"
-    e = os.path.join(full_test_bucket_name, e_path)
-    content_type = mimetypes.guess_type(e_path)[0] 
-    data = b"this is test text content"
+    if isImplicit:
+        with fs.open(e, 'wb') as f:
+            f.write(image_file.read())
+            f.flush()
+    else:
+         with fs.open(e, 'wb', content_type =content_type ) as f:
+            f.write(image_file.read())
+            f.flush()
 
-    with fs.open(e, "wb") as f:
-        f.write(data)
-        f.flush()
-        
-    assert content_type == fs.info(e)['contentType']
+    assert  fs.info(e)['contentType'] ==content_type
+
+
+@pytest.mark.parametrize("isImplicit, content_type",[(True,"text/plain"),(False,"text/plain")])
+def test_content_type_text(fs,isImplicit=True, content_type=None):
+    e_path = "file.txt"
+    e = os.path.join(full_test_bucket_name, e_path)
+    data = b"this is test text content"
+    if isImplicit:
+        with fs.open(e, "wb") as f:
+            f.write(data)
+            f.flush()
+    else:
+        with fs.open(e, 'wb', content_type =content_type ) as f:
+            f.write(data)
+            f.flush()
+
+    assert fs.info(e)['contentType']==content_type
+
+@pytest.mark.parametrize("isImplicit, content_type",[(True,"appliction/json"),(False,"text/markdown")])
+def test_content_type(fs,isImplicit=True, content_type=None):
+    file_path = os.path.abspath(os.path.join(__file__ ,"../../../"))
+    file_name = "README.md"
+    e = os.path.join(full_test_bucket_name, file_name)
+    print(e)
+    with open(os.path.join(file_path,file_name), "rb") as f:
+        bytes = f.read()
+   
+    if isImplicit:
+        with fs.open(e, "wb") as f:
+            f.write(bytes)
+            f.flush()
+    else:
+        with fs.open(e, 'wb', content_type =content_type ) as f:
+            f.write(bytes)
+            f.flush()
+    assert fs.info(e)['contentType']==content_type

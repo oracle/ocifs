@@ -1197,7 +1197,9 @@ class OCIFileSystem(AbstractFileSystem):
             Additional parameters used for oci methods.  Typically used for
             ServerSideEncryption.
         """
-        kwargs['content_type'] = kwargs.get('content_type', mimetypes.guess_type(path)[0])
+        guessed_content_type,_ = mimetypes.guess_type(path) 
+        if guessed_content_type:
+            kwargs['content_type'] = kwargs.get('content_type', guessed_content_type)
         return super().open(
             path=path,
             mode=mode,
