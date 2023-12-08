@@ -1195,11 +1195,12 @@ class OCIFileSystem(AbstractFileSystem):
             default text encoding is used if not given.
         kwargs: dict-like
             Additional parameters used for oci methods.  Typically used for
-            ServerSideEncryption.
+            ServerSideEncryption. "content_type" is set implicly
         """
-        guessed_content_type,_ = mimetypes.guess_type(path) 
+        # Default value is "application/json" for files not having pre-defined content type.
+        guessed_content_type, _ = mimetypes.guess_type(path)
         if guessed_content_type:
-            kwargs['content_type'] = kwargs.get('content_type', guessed_content_type)
+            kwargs["content_type"] = kwargs.get("content_type", guessed_content_type)
         return super().open(
             path=path,
             mode=mode,
