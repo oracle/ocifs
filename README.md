@@ -59,8 +59,12 @@ fs = OCIFilesystem("~/.oci/config")
  # 18.Get the contents of the file as a byte
  fs.read_block("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt", 0, 13)
  # 19.Open a file for writing/flushing into file in OCI objectstorage bucket
- # content_type is guessed from filename, can be passed explicitly for unkonwn mimetype while writing file
- with fs.open("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt", 'w', autocommit=True, content_type=None) as f:
+ # Ocifs sets the best-guessed content-type for hello.txt i.e "text/plain"
+ with fs.open("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt", 'w', autocommit=True) as f:
+        f.write("Writing data to buffer, before manually flushing and closing.") # data is flushed and file closed
+        f.flush()
+# Ocifs uses the specified content-type passed in the open while writing to OCI objectstorage bucket
+ with fs.open("oci://<my_bucket>@<my_namespace>/<my_prefix>/hello.txt", 'w',content_type='text/plain') as f:
         f.write("Writing data to buffer, before manually flushing and closing.") # data is flushed and file closed
         f.flush()
  # 20.Open a file for reading a file from OCI objectstorage bucket

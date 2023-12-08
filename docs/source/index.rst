@@ -89,6 +89,26 @@ other projects that consume the file interface like ``gzip`` or ``pandas``.
 .. _read_block: https://filesystem-spec.readthedocs.io/en/latest/api.html?highlight=read_block#fsspec.spec.AbstractFileSystem.read_block
 .. _caching system: https://filesystem-spec.readthedocs.io/en/latest/features.html?highlight=cache#instance-caching
 
+Adding content type while writing:
+
+.. code-block:: python
+
+   >>> fs = ocifs.OCIFileSystem(config=".oci/config")  # uses default credentials
+   # Example: passing content_type as the parameter value, OCIFS will use this value to set the content_type.
+   >>> with fs.open('oci://mybucket@mynamespace/path/new-file.txt', 'wb', content_type = 'text/plain' ) as f:
+   ...     f.write(2*2**20 * b'a') # data is flushed and file closed
+   ...     f.flush() # data is flushed and file closed
+
+   #Example - ocifs will determine the best-suited content-type for 'new-file.txt'
+   >>> with fs.open('oci://mybucket@mynamespace/path/new-file.txt', 'wb') as f:
+   ...     f.write(2*2**20 * b'a') # data is flushed and file closed
+   ...     f.flush() # data is flushed and file closed
+
+
+When uploading a file, you can also specify  ``content_type`` (commonly referred to as MIME type).
+``ocifs`` automatically infers the content type from the file extension, but if you specify ``content_type``
+it will override the auto-detected type. If no content type is specified and the file doesn't have a file
+extension, ``ocifs`` defaults to the type ``application/json``.
 
 Integration
 -----------

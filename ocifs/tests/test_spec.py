@@ -1510,10 +1510,25 @@ def test_sync(fs):
     fs.rm(remote_dir, recursive=True)
 
 
-@pytest.mark.parametrize(
-    "isImplicit, content_type", [(True, "image/jpeg"), (False, "image/jpeg")]
-)
-def test_content_type_image(fs, isImplicit, content_type):
+@pytest.mark.parametrize("content_type", ["image/jpeg"])
+def test_content_type_image_explicit(fs, content_type):
+    from PIL import Image
+
+    import io
+
+    e_path = "image.jpeg"
+    e = os.path.join(full_test_bucket_name, e_path)
+
+    image = Image.new("RGBA", size=(50, 50), color=(256, 0, 0))
+    image_file = io.BytesIO(image.tobytes())
+    with fs.open(e, "wb", content_type=content_type) as f:
+        f.write(image_file.read())
+        f.flush()
+    assert fs.info(e)["contentType"] == content_type
+
+
+@pytest.mark.parametrize("content_type", ["image/jpeg"])
+def test_content_type_image_implicit(fs, content_type):
     from PIL import Image
 
     import io
@@ -1524,53 +1539,57 @@ def test_content_type_image(fs, isImplicit, content_type):
     image = Image.new("RGBA", size=(50, 50), color=(256, 0, 0))
     image_file = io.BytesIO(image.tobytes())
 
-    if isImplicit:
-        with fs.open(e, "wb") as f:
-            f.write(image_file.read())
-            f.flush()
-    else:
-        with fs.open(e, "wb", content_type=content_type) as f:
-            f.write(image_file.read())
-            f.flush()
+    with fs.open(e, "wb") as f:
+        f.write(image_file.read())
+        f.flush()
 
     assert fs.info(e)["contentType"] == content_type
 
 
-@pytest.mark.parametrize(
-    "isImplicit, content_type", [(True, "text/plain"), (False, "text/plain")]
-)
-def test_content_type_text(fs, isImplicit, content_type):
+@pytest.mark.parametrize("content_type", ["text/plain"])
+def test_content_type_text_explicit(fs, content_type):
     e_path = "file.txt"
     e = os.path.join(full_test_bucket_name, e_path)
     data = b"this is test text content"
-    if isImplicit:
-        with fs.open(e, "wb") as f:
-            f.write(data)
-            f.flush()
-    else:
-        with fs.open(e, "wb", content_type=content_type) as f:
-            f.write(data)
-            f.flush()
+    with fs.open(e, "wb", content_type=content_type) as f:
+        f.write(data)
+        f.flush()
 
     assert fs.info(e)["contentType"] == content_type
 
 
-@pytest.mark.parametrize(
-    "isImplicit, content_type", [(True, "appliction/json"), (False, "text/markdown")]
-)
-def test_content_type(fs, isImplicit, content_type):
+@pytest.mark.parametrize("content_type", ["text/plain"])
+def test_content_type_text_implicit(fs, content_type):
+    e_path = "file.txt"
+    e = os.path.join(full_test_bucket_name, e_path)
+    data = b"this is test text content"
+    with fs.open(e, "wb") as f:
+        f.write(data)
+        f.flush()
+    assert fs.info(e)["contentType"] == content_type
+
+
+@pytest.mark.parametrize("content_type", ["text/markdown"])
+def test_content_type_implicit(fs, content_type):
     file_path = os.path.abspath(os.path.join(__file__, "../../../"))
     file_name = "README.md"
     e = os.path.join(full_test_bucket_name, file_name)
     with open(os.path.join(file_path, file_name), "rb") as f:
         bytes = f.read()
+    with fs.open(e, "wb", content_type=content_type) as f:
+        f.write(bytes)
+        f.flush()
+    assert fs.info(e)["contentType"] == content_type
 
-    if isImplicit:
-        with fs.open(e, "wb") as f:
-            f.write(bytes)
-            f.flush()
-    else:
-        with fs.open(e, "wb", content_type=content_type) as f:
-            f.write(bytes)
-            f.flush()
+
+@pytest.mark.parametrize("content_type", ["appliction/json"])
+def test_content_type_explicit(fs, content_type):
+    file_path = os.path.abspath(os.path.join(__file__, "../../../"))
+    file_name = "README.md"
+    e = os.path.join(full_test_bucket_name, file_name)
+    with open(os.path.join(file_path, file_name), "rb") as f:
+        bytes = f.read()
+    with fs.open(e, "wb") as f:
+        f.write(bytes)
+        f.flush()
     assert fs.info(e)["contentType"] == content_type
