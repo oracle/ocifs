@@ -54,4 +54,9 @@ jobs:
           $CONDA/bin/conda init
           source /home/runner/.bashrc
           python3 -m pip install -r test-requirements.txt
+          echo ${{ env.OCI__OCIFS_TEST_BUCKET }}
+          echo ${{ env.OCIFS_TEST_BUCKET }}
+          export OCIFS_TEST_BUCKET="ocifs-test"
+          export OCIFS_IAM_TYPE="instance_principal"
+          echo ${{ env.OCIFS_TEST_BUCKET }}
           python -m pytest -v -p no:warnings --durations=5 ocifs/tests/test_integration.py
