@@ -58,5 +58,6 @@ jobs:
           echo ${{ env.OCIFS_TEST_BUCKET }}
           export OCIFS_TEST_BUCKET="ocifs-test"
           export OCIFS_IAM_TYPE="instance_principal"
+          export OCIFS_TEST_NAMESPACE="test"
           echo ${{ env.OCIFS_TEST_BUCKET }}
           python -m pytest -v -p no:warnings --durations=5 ocifs/tests/test_integration.py
