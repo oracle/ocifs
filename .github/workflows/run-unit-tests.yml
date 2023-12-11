@@ -53,4 +53,5 @@ jobs:
           set -x # print commands that are executed
           $CONDA/bin/conda init
           source /home/runner/.bashrc
+          python3 -m pip install test-requirements.txt
           python -m pytest -v -p no:warnings --durations=5 ocifs/tests
