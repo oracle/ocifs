@@ -8,12 +8,15 @@ import pytest
 import oci
 from ocifs import OCIFileSystem
 
-config = oci.config.from_file("~/.oci/config")
-storage_options = {"config": config}
 
 namespace_name = os.environ["OCIFS_TEST_NAMESPACE"]
-test_bucket_name = os.environ["OCIFS_TEST_BUCKET"]
+test_bucket_name = os.environ.get("OCIFS_TEST_BUCKET", "ocifs-test")
 remote_folder = f"oci://{test_bucket_name}-int@{namespace_name}/sample_data"
+
+iam_type = os.environ.get("OCIFS_IAM_TYPE", "api_key")
+if iam_type == "api_key":
+    config = oci.config.from_file("~/.oci/config")
+    storage_options = {"config": config}
 
 
 @pytest.fixture(autouse=True)
@@ -24,10 +27,6 @@ def reset_folder():
     except FileNotFoundError:
         pass
     yield
-
-
-# def test_pandas_version():
-#     assert pd.__version__ >= "1.2"
 
 
 def test_rw_small():

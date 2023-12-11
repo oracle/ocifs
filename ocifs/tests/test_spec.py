@@ -20,13 +20,11 @@ from oci.exceptions import (
     ConfigFileNotFound,
 )
 from copy import deepcopy
+from oci.object_storage import ObjectStorageClient
 
-from ocifs.data_lake.lake_sharing_object_storage_client import (
-    LakeSharingObjectStorageClient,
-)
 
 namespace_name = os.environ["OCIFS_TEST_NAMESPACE"]
-test_bucket_name = os.environ["OCIFS_TEST_BUCKET"]
+test_bucket_name = os.environ.get("OCIFS_TEST_BUCKET", "ocifs-test")
 security_token_profile = os.environ["OCIFS_TEST_SECURITY_TOKEN_PROFILE"]
 full_test_bucket_name = f"{test_bucket_name}@{namespace_name}"
 
@@ -76,9 +74,11 @@ b = os.path.join(full_test_bucket_name, b_path)
 c = os.path.join(full_test_bucket_name, c_path)
 d = os.path.join(full_test_bucket_name, d_path)
 
-config = oci.config.from_file("~/.oci/config")
-storage_options = {"config": config}
-os.environ["OCIFS_IAM_TYPE"] = "api_key"
+iam_type = os.environ.get("OCIFS_IAM_TYPE", "api_key")
+if iam_type == "api_key":
+    config = oci.config.from_file("~/.oci/config")
+    storage_options = {"config": config}
+
 
 SAFETY_SLEEP_TIME = 10
 
@@ -86,7 +86,7 @@ SAFETY_SLEEP_TIME = 10
 @pytest.fixture
 def fs():
     try:
-        client = LakeSharingObjectStorageClient(config)
+        client = ObjectStorageClient(config)
     except ServiceError as e:
         raise translate_oci_error(e) from e
 
