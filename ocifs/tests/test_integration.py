@@ -18,8 +18,9 @@ if iam_type == "api_key":
     config = oci.config.from_file("~/.oci/config")
     storage_options = {"config": config}
 elif iam_type == "instance_principal":
-    instance_principal_signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
-    storage_options = {"signer": instance_principal_signer}
+    signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
+    storage_options = {"signer": signer, "config": {}}
+    identity_client = oci.identity.IdentityClient(config={}, signer=signer)
 else:
     config = None
     storage_options = {"iam_type": iam_type}
@@ -28,7 +29,7 @@ else:
 @pytest.fixture(autouse=True)
 def reset_folder():
     if iam_type == "instance_principal":
-        oci_fs = OCIFileSystem(signer=instance_principal_signer, iam_type=iam_type)
+        oci_fs = OCIFileSystem(config={}, signer=signer, iam_type=iam_type)
     else:
         oci_fs = OCIFileSystem(config=config, iam_type=iam_type)
     try:
