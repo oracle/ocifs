@@ -17,11 +17,14 @@ iam_type = os.environ.get("OCIFS_IAM_TYPE", "api_key")
 if iam_type == "api_key":
     config = oci.config.from_file("~/.oci/config")
     storage_options = {"config": config}
+else:
+    config = None
+    storage_options = {"iam_type": iam_type}
 
 
 @pytest.fixture(autouse=True)
 def reset_folder():
-    oci_fs = OCIFileSystem(config=config)
+    oci_fs = OCIFileSystem(config=config, iam_type=iam_type)
     try:
         oci_fs.rm(remote_folder, recursive=True)
     except FileNotFoundError:
