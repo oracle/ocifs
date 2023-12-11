@@ -17,6 +17,9 @@ iam_type = os.environ.get("OCIFS_IAM_TYPE", "api_key")
 if iam_type == "api_key":
     config = oci.config.from_file("~/.oci/config")
     storage_options = {"config": config}
+elif iam_type == "instance_principal":
+    instance_principal_signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
+    storage_options = {"signer": instance_principal_signer}
 else:
     config = None
     storage_options = {"iam_type": iam_type}
@@ -24,7 +27,10 @@ else:
 
 @pytest.fixture(autouse=True)
 def reset_folder():
-    oci_fs = OCIFileSystem(config=config, iam_type=iam_type)
+    if iam_type == "instance_principal":
+        oci_fs = OCIFileSystem(signer=instance_principal_signer, iam_type=iam_type)
+    else:
+        oci_fs = OCIFileSystem(config=config, iam_type=iam_type)
     try:
         oci_fs.rm(remote_folder, recursive=True)
     except FileNotFoundError:
