@@ -6,6 +6,7 @@ from ast import literal_eval
 import inspect
 import logging
 from typing import Union  # pragma: no cover
+import mimetypes
 
 from fsspec import AbstractFileSystem
 from fsspec.utils import tokenize, stringify_path
@@ -817,6 +818,7 @@ class OCIFileSystem(AbstractFileSystem):
                     "name": path,
                     "type": "file",
                     "size": int(obj_data["Content-Length"]),
+                    "contentType": obj_data["Content-Type"],
                     "timeModified": obj_data["last-modified"],
                     "acceptRanges": obj_data["accept-ranges"],
                     "etag": obj_data["etag"],
@@ -1193,9 +1195,12 @@ class OCIFileSystem(AbstractFileSystem):
             default text encoding is used if not given.
         kwargs: dict-like
             Additional parameters used for oci methods.  Typically used for
-            ServerSideEncryption.
+            ServerSideEncryption. "content_type" is set implicly
         """
-
+        # Default value is "application/json" for files not having pre-defined content type.
+        guessed_content_type, _ = mimetypes.guess_type(path)
+        if guessed_content_type:
+            kwargs["content_type"] = kwargs.get("content_type", guessed_content_type)
         return super().open(
             path=path,
             mode=mode,
@@ -1491,7 +1496,7 @@ class OCIFile(AbstractBufferedFile):
             self.parts.append({"partNum": part, "etag": out.headers["etag"]})
 
         if self.autocommit and final:
-            self.commit()
+            self.commit(**self.kwargs)
         return not final
 
     def commit(self, **kwargs):

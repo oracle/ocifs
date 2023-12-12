@@ -5,6 +5,11 @@ Release Notes
 .. toctree::
     :maxdepth: 2
 
+1.3.1
+------
+Release date: December 8, 2023
+
+* Introducing support for setting the content type implicitly or explicitly when writing files
 
 1.3.0
 ------
