@@ -53,6 +53,7 @@ classifiers = [
 dependencies = [
   "fsspec>=0.8.7",
   "oci>=2.43.1",
+  "requests",
 ]
 
 [project.urls]
