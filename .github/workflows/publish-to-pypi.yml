@@ -25,17 +25,17 @@ jobs:
 ## To run publish to test PyPI a secret with token needs to be added,
 ##    this one GH_OCIFS_TESTPYPI_TOKEN - removed after initial test.
 ##    regular name is occupied by former developer and can't be used for testing
-      - name: Publish distribution 📦 to Test PyPI
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.GH_OCIFS_TESTPYPI_TOKEN }}
-        run: |
-          pip install twine
-          twine upload -r testpypi dist/* -u $TWINE_USERNAME -p $TWINE_PASSWORD
-      # - name: Publish distribution 📦 to PyPI
+      # - name: Publish distribution 📦 to Test PyPI
       #   env:
       #     TWINE_USERNAME: __token__
-      #     TWINE_PASSWORD: ${{ secrets.GH_OCIFS_PYPI_TOKEN}}
+      #     TWINE_PASSWORD: ${{ secrets.GH_OCIFS_TESTPYPI_TOKEN }}
       #   run: |
       #     pip install twine
-      #     twine upload dist/* -u $TWINE_USERNAME -p $TWINE_PASSWORD
+      #     twine upload -r testpypi dist/* -u $TWINE_USERNAME -p $TWINE_PASSWORD
+      - name: Publish distribution 📦 to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.GH_OCIFS_PYPI_TOKEN}}
+        run: |
+          pip install twine
+          twine upload dist/* -u $TWINE_USERNAME -p $TWINE_PASSWORD
