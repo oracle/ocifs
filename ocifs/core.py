@@ -359,6 +359,20 @@ class OCIFileSystem(AbstractFileSystem):
         obj_path = obj_path.rstrip("/")
         return bucket, namespace, obj_path
 
+    def setup_oci_client(self, config, **kwargs):
+        try:
+            logger.debug(
+                f"Lakesharing Object Storage Client is being set up for supporting data lake support and "
+                f"interacting with object storage using the config passed in: {self.config}"
+            )
+            return LakeSharingObjectStorageClient(self.config, **self.config_kwargs)
+        except Exception as e:
+            logger.error(
+                f"Exception encountered when attempting to initialize the Lakesharing Object Storage Client "
+                f"using the config:{self.config}"
+            )
+            raise e
+
     def connect(self, refresh=True):
         """Establish oci connection object.
 
@@ -386,20 +400,7 @@ class OCIFileSystem(AbstractFileSystem):
             {"additional_user_agent": f"Oracle-ocifs/version={__version__}"}
         )
         self._get_region()
-        try:
-            self.oci_client = LakeSharingObjectStorageClient(
-                self.config, **self.config_kwargs
-            )
-            logger.debug(
-                f"Lakesharing Object Storage Client is being set up for supporting data lake support and "
-                f"interacting with object storage using the config passed in: {self.config}"
-            )
-        except Exception as e:
-            logger.error(
-                "Exception encountered when attempting to initialize the Lakesharing Object Storage Client"
-                " using the config:{self.config}"
-            )
-            raise e
+        self.oci_client = self.setup_oci_client(self.config, **self.config_kwargs)
         return self.oci_client
 
     def invalidate_cache(self, path=None):
