@@ -1,5 +1,5 @@
 # coding: utf-8
-# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2024 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 import os
 from ast import literal_eval
@@ -359,6 +359,20 @@ class OCIFileSystem(AbstractFileSystem):
         obj_path = obj_path.rstrip("/")
         return bucket, namespace, obj_path
 
+    def setup_oci_client(self, config, **kwargs):
+        try:
+            logger.debug(
+                f"Lakesharing Object Storage Client is being set up for supporting data lake support and "
+                f"interacting with object storage using the config passed in: {self.config}"
+            )
+            return LakeSharingObjectStorageClient(self.config, **self.config_kwargs)
+        except Exception as e:
+            logger.error(
+                f"Exception encountered when attempting to initialize the Lakesharing Object Storage Client "
+                f"using the config:{self.config}"
+            )
+            raise e
+
     def connect(self, refresh=True):
         """Establish oci connection object.
 
@@ -386,20 +400,7 @@ class OCIFileSystem(AbstractFileSystem):
             {"additional_user_agent": f"Oracle-ocifs/version={__version__}"}
         )
         self._get_region()
-        try:
-            self.oci_client = LakeSharingObjectStorageClient(
-                self.config, **self.config_kwargs
-            )
-            logger.debug(
-                f"Lakesharing Object Storage Client is being set up for supporting data lake support and "
-                f"interacting with object storage using the config passed in: {self.config}"
-            )
-        except Exception as e:
-            logger.error(
-                "Exception encountered when attempting to initialize the Lakesharing Object Storage Client"
-                " using the config:{self.config}"
-            )
-            raise e
+        self.oci_client = self.setup_oci_client(self.config, **self.config_kwargs)
         return self.oci_client
 
     def invalidate_cache(self, path=None):
@@ -1273,6 +1274,42 @@ class OCIFileSystem(AbstractFileSystem):
         if not bucket:
             raise ValueError("Cannot crawl all of OCI Object Storage")
         return super().walk(path, maxdepth=maxdepth, **kwargs)
+
+    def glob(self, path, maxdepth=None, **kwargs):
+        """
+        Find files by glob-matching.
+
+        If the path ends with '/', only folders are returned.
+
+        We support ``"**"``,
+        ``"?"`` and ``"[..]"``. We do not support ^ for pattern negation.
+
+        The `maxdepth` option is applied on the first `**` found in the path.
+
+        Search path names that contain embedded characters special to this
+        implementation of glob may not produce expected results;
+        e.g., 'foo/bar/*starredfilename*'.
+
+        kwargs are passed to ``ls``.
+        """
+        path_sans_protocol = self._strip_protocol(path)
+        full_bucket, _, obj_path = path_sans_protocol.partition("/")
+        # Added the below check for lake support
+        if "@ocid1.lake" in full_bucket:
+            ocifs_url = full_bucket
+            ocifs_url = f"ocilake://{ocifs_url}"
+            bucket, namespace, key = self.split_path(path)
+            bucket_full_path = _build_full_path(bucket, namespace, key)
+            bucket_with_namespace_path = _build_full_path(bucket, namespace)
+            path_list = super().glob(bucket_full_path, maxdepth=maxdepth, **kwargs)
+            formatted_path_list = []
+            for path in path_list:
+                formatted_path_list.append(
+                    ocifs_url + path.removeprefix(bucket_with_namespace_path)
+                )
+            return formatted_path_list
+        else:
+            return super().glob(path, maxdepth=maxdepth, **kwargs)
 
     def cat(self, path, recursive=False, on_error="raise", **kwargs):
         """Fetch (potentially multiple) paths' contents

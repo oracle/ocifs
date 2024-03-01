@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2023 Oracle and/or its affiliates.
+# Copyright (c) 2024 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
 import io
@@ -200,6 +200,32 @@ def test_oci_ls(fs):
     assert nested_file1_path not in fs.ls(full_external_mount_name + "/")
     assert nested_file1_path in fs.ls(full_external_mount_name + "/nested/")
     assert nested_file1_path in fs.ls(full_external_mount_name + "/nested")
+
+
+def test_glob(fs):
+    fn = full_external_mount_name + "/nested/file1"
+    assert fn not in fs.glob(full_external_mount_name + "/")
+    assert fn not in fs.glob(full_external_mount_name + "/*")
+    assert fn not in fs.glob(full_external_mount_name + "/nested")
+    assert fn in fs.glob(full_external_mount_name + "/nested/*")
+    assert fn in fs.glob(full_external_mount_name + "/nested/file*")
+    assert fn in fs.glob(full_external_mount_name + "/*/*")
+    assert [full_external_mount_name + "/nested/nested2"] == fs.glob(
+        full_external_mount_name + "/nested/nested2"
+    )
+    out = fs.glob(full_external_mount_name + "/nested/nested2/*")
+    assert {
+        f"{full_external_mount_name}/nested/nested2/file1",
+        f"{full_external_mount_name}/nested/nested2/file2",
+    } == set(out)
+
+    # Make sure glob() deals with the dot character (.) correctly.
+    assert full_external_mount_name + "/file.dat" in fs.glob(
+        full_external_mount_name + "/file.*"
+    )
+    assert full_external_mount_name + "/filexdat" not in fs.glob(
+        full_external_mount_name + "/file.*"
+    )
 
 
 def test_oci_ls_detail(fs):
