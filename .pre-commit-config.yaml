@@ -7,10 +7,16 @@ repos:
     -   id: check-docstring-first
     -   id: check-yaml
     -   id: check-added-large-files
--   repo: https://github.com/ambv/black
-    rev: 23.3.0
+# ruff
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.9
     hooks:
-    -   id: black
+    -   id: ruff
+        args: [ --fix ]
+        files: ^ads
+        exclude: ^docs/
+    -   id: ruff-format
+        exclude: ^docs/
 # Hardcoded secrets and ocids detector
 -   repo: https://github.com/gitleaks/gitleaks
     rev: v8.17.0
