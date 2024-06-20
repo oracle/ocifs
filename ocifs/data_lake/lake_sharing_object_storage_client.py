@@ -1,5 +1,5 @@
 # coding: utf-8
-# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2024 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 import logging
 import os
@@ -173,9 +173,9 @@ class LakeSharingObjectStorageClient(ObjectStorageClient):
         if "timeout" in kwargs:
             base_client_init_kwargs["timeout"] = kwargs.get("timeout")
         if base_client_init_kwargs.get("circuit_breaker_strategy") is None:
-            base_client_init_kwargs[
-                "circuit_breaker_strategy"
-            ] = circuit_breaker.DEFAULT_CIRCUIT_BREAKER_STRATEGY
+            base_client_init_kwargs["circuit_breaker_strategy"] = (
+                circuit_breaker.DEFAULT_CIRCUIT_BREAKER_STRATEGY
+            )
         if "allow_control_chars" in kwargs:
             base_client_init_kwargs["allow_control_chars"] = kwargs.get(
                 "allow_control_chars"
@@ -226,9 +226,9 @@ class LakeSharingObjectStorageClient(ObjectStorageClient):
                 f"lakeSharing api server health check status:{lake_sharing_service_health_status}"
             )
             if lake_sharing_service_health_status:
-                self.lake_ocid_to_lake_sharing_client_map[
-                    lake_ocid
-                ] = lake_sharing_client
+                self.lake_ocid_to_lake_sharing_client_map[lake_ocid] = (
+                    lake_sharing_client
+                )
         return lake_sharing_client
 
     def get_bucket_namespace_for_given_mount_name(
@@ -249,9 +249,9 @@ class LakeSharingObjectStorageClient(ObjectStorageClient):
                 self.config, lake_service_api_endpoint, **kwargs
             )
             self.lake_ocid_to_lake_client_map[lake_ocid] = lake_client
-        self.lake_ocid_to_lake_sharing_client_map[
-            lake_ocid
-        ] = self.get_lake_sharing_client(lake_ocid, lake_client, **kwargs)
+        self.lake_ocid_to_lake_sharing_client_map[lake_ocid] = (
+            self.get_lake_sharing_client(lake_ocid, lake_client, **kwargs)
+        )
         mount_scope_entity_type: str = None
         mount_scope_schema_key: str = None
         mount_scope_table_key: str = None
@@ -277,12 +277,12 @@ class LakeSharingObjectStorageClient(ObjectStorageClient):
         )
 
         if lake_mount_response.status == 200:
-            bucket_namespace_map[
-                "namespace"
-            ] = lake_mount_response.data.mount_spec.namespace
-            bucket_namespace_map[
-                "bucket_name"
-            ] = lake_mount_response.data.mount_spec.bucket_name
+            bucket_namespace_map["namespace"] = (
+                lake_mount_response.data.mount_spec.namespace
+            )
+            bucket_namespace_map["bucket_name"] = (
+                lake_mount_response.data.mount_spec.bucket_name
+            )
         else:
             raise ValueError(
                 "Invalid value given for mountName or lakeOcid.Please check !!!!!!"

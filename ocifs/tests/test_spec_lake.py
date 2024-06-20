@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2023 Oracle and/or its affiliates.
+# Copyright (c) 2023, 2024 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
 import io
@@ -279,9 +279,7 @@ def test_write_blocks(fs):
         assert f.mpu
         assert f.parts
     assert fs.info(full_external_mount_name + "/temp")["size"] == 6 * 2**20
-    with fs.open(
-        full_external_mount_name + "/temp", "wb", block_size=10 * 2**20
-    ) as f:
+    with fs.open(full_external_mount_name + "/temp", "wb", block_size=10 * 2**20) as f:
         f.write(b"a" * 15 * 2**20)
         assert f.buffer.tell() == 0
     assert fs.info(full_external_mount_name + "/temp")["size"] == 15 * 2**20

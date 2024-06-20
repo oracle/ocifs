@@ -1,5 +1,5 @@
 # coding: utf-8
-# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2024 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 import logging
 import os
@@ -127,9 +127,9 @@ class LakeSharingClient(object):
         if "timeout" in kwargs:
             base_client_init_kwargs["timeout"] = kwargs.get("timeout")
         if base_client_init_kwargs.get("circuit_breaker_strategy") is None:
-            base_client_init_kwargs[
-                "circuit_breaker_strategy"
-            ] = circuit_breaker.DEFAULT_CIRCUIT_BREAKER_STRATEGY
+            base_client_init_kwargs["circuit_breaker_strategy"] = (
+                circuit_breaker.DEFAULT_CIRCUIT_BREAKER_STRATEGY
+            )
         if "allow_control_chars" in kwargs:
             base_client_init_kwargs["allow_control_chars"] = kwargs.get(
                 "allow_control_chars"
