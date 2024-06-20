@@ -1,5 +1,5 @@
 # coding: utf-8
-# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2024 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 import os
 from ast import literal_eval
@@ -1086,9 +1086,9 @@ class OCIFileSystem(AbstractFileSystem):
 
     def _update_service_endpoint(self):
         if self.region is not None and "service_endpoint" not in self.config_kwargs:
-            self.config_kwargs[
-                "service_endpoint"
-            ] = f"https://objectstorage.{self.region}.oraclecloud.com"
+            self.config_kwargs["service_endpoint"] = (
+                f"https://objectstorage.{self.region}.oraclecloud.com"
+            )
 
     def _get_iam_auth(self):
         assert self._iam_type in IAM_POLICIES, (
