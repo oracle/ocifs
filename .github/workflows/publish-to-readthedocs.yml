@@ -3,6 +3,7 @@ name: "Publish Docs"
 # To run this workflow manually from the Actions tab
 on:
   # Auto-trigger this workflow on tag creation
+  workflow_dispatch:
   push:
     tags:
       - 'v*.*.*'

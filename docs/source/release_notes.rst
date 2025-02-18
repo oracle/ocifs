@@ -5,6 +5,13 @@ Release Notes
 .. toctree::
     :maxdepth: 2
 
+1.3.2
+------
+Release date: February 18, 2025
+
+* Added support for EU Sovereign Cloud
+* Minor bug fixes
+
 1.3.1
 ------
 Release date: December 8, 2023
