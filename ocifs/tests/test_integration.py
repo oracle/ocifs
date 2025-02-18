@@ -1,5 +1,5 @@
 # coding: utf-8
-# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2025 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 import pandas as pd
 import numpy as np
@@ -8,8 +8,8 @@ import pytest
 import oci
 from ocifs import OCIFileSystem
 
-config = oci.config.from_file("~/.oci/config")
-storage_options = {"config": config}
+storage_options = {}
+config = {}
 
 namespace_name = os.environ["OCIFS_TEST_NAMESPACE"]
 test_bucket_name = os.environ["OCIFS_TEST_BUCKET"]
@@ -24,10 +24,6 @@ def reset_folder():
     except FileNotFoundError:
         pass
     yield
-
-
-# def test_pandas_version():
-#     assert pd.__version__ >= "1.2"
 
 
 def test_rw_small():
@@ -67,8 +63,3 @@ def test_new_bucket():
 
     df_reloaded = pd.read_csv(small_fn, storage_options=storage_options2)
     assert df_reloaded.equals(df)
-
-
-def test_dask_extra_large():
-    # TODO: read something larger than memory into dask dataframe
-    pass

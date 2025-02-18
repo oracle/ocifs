@@ -1,5 +1,5 @@
 # coding: utf-8
-# Copyright (c) 2021, 2024 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2025 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 import os
 from ast import literal_eval
@@ -277,6 +277,8 @@ class OCIFileSystem(AbstractFileSystem):
                     obj_path,
                     "--src-dir",
                     src_dir,
+                    "--auth",
+                    self._iam_type,
                 ]
             )
         elif self.is_local_path(dest_dir):
@@ -295,6 +297,8 @@ class OCIFileSystem(AbstractFileSystem):
                     obj_path,
                     "--dest-dir",
                     dest_dir,
+                    "--auth",
+                    self._iam_type,
                 ]
             )
         else:
