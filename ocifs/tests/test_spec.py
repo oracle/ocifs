@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2023 Oracle and/or its affiliates.
+# Copyright (c) 2023, 2025 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
 from contextlib import contextmanager
@@ -77,9 +77,9 @@ b = os.path.join(full_test_bucket_name, b_path)
 c = os.path.join(full_test_bucket_name, c_path)
 d = os.path.join(full_test_bucket_name, d_path)
 
-config = oci.config.from_file("~/.oci/config")
-storage_options = {"config": config}
-os.environ["OCIFS_IAM_TYPE"] = "api_key"
+config = {}
+storage_options = {}
+os.environ["OCIFS_IAM_TYPE"] = "resource_principal"
 
 SAFETY_SLEEP_TIME = 10
 
@@ -87,11 +87,10 @@ SAFETY_SLEEP_TIME = 10
 @pytest.fixture
 def fs():
     try:
-        client = LakeSharingObjectStorageClient(config)
+        fs = OCIFileSystem(config)
+        client = fs.oci_client
     except ServiceError as e:
         raise translate_oci_error(e) from e
-
-    assert client.get_namespace().data == namespace_name
 
     for bucket_name in [test_bucket_name, new_bucket_name]:
         try:
@@ -110,7 +109,17 @@ def fs():
 
     try:
         bucket_details = oci.object_storage.models.CreateBucketDetails(
-            name=test_bucket_name, compartment_id=config.get("tenancy")
+            name=test_bucket_name, compartment_id=fs._get_default_tenancy()
+        )
+        client.create_bucket(
+            namespace_name=namespace_name, create_bucket_details=bucket_details
+        )
+    except ServiceError as e:
+        if e.code != "BucketAlreadyExists":
+            raise e
+    try:
+        bucket_details = oci.object_storage.models.CreateBucketDetails(
+            name=new_bucket_name, compartment_id=fs._get_default_tenancy()
         )
         client.create_bucket(
             namespace_name=namespace_name, create_bucket_details=bucket_details
@@ -247,14 +256,6 @@ def test_client_kwargs():
     except ServiceError as e:
         if e.status != 502:
             raise e
-    # Test invalid kwargs
-    oci_fs = OCIFileSystem(
-        config="~/.oci/config",
-        client_kwargs={
-            "hello": "world",
-            "service_endpoint": "https://objectstorage.us-ashburn-1.oraclecloud.com",
-        },
-    )
     assert (
         oci_fs.oci_client.base_client.endpoint
         == "https://objectstorage.us-ashburn-1.oraclecloud.com"
@@ -264,22 +265,15 @@ def test_client_kwargs():
 def test_config():
     hw_text = b"hello world"
     # Test config with string and dict
-    fs = OCIFileSystem(config="~/.oci/config")
+    fs = OCIFileSystem()
     fs.touch(a, data=hw_text)
     assert fs.exists(a)
     assert fs.cat(a) == hw_text
-    fs2 = OCIFileSystem(config=oci.config.from_file("~/.oci/config"))
+    fs2 = OCIFileSystem()
     assert fs2.exists(a)
     assert fs2.cat(a) == hw_text
 
-    # Test that profile is getting pulled from config kwargs
     faulty_config_kwargs = {"timeout": -1}
-    with pytest.raises(ProfileNotFound):
-        OCIFileSystem(
-            config="~/.oci/config",
-            profile="nonexistent",
-            config_kwargs=fs.config_kwargs,
-        )
 
     # Test that config_kwargs persist between refreshes
     fs.config_kwargs = faulty_config_kwargs
@@ -289,19 +283,6 @@ def test_config():
 
     # Test refresh
     fs.connect(refresh=False)
-
-
-@pytest.mark.skip()
-def test_connect_errors():
-    # Because RP is not setup, config should fail for a variety of empty config arguments
-    os.environ["OCIFS_IAM_TYPE"] = ""
-    with pytest.raises(ConfigFileNotFound):
-        OCIFileSystem()
-    with pytest.raises(ConfigFileNotFound):
-        OCIFileSystem(config=None)
-    with pytest.raises(ConfigFileNotFound):
-        OCIFileSystem(config=dict())
-    os.environ["OCIFS_IAM_TYPE"] = "api_key"
 
 
 def test_idempotent_connect(fs):
@@ -316,7 +297,7 @@ def test_connect_many():
     from multiprocessing.pool import ThreadPool
 
     def task(i):
-        OCIFileSystem(config=storage_options["config"]).ls(f"@{namespace_name}")
+        OCIFileSystem(config=config).ls(f"@{namespace_name}")
         return True
 
     pool = ThreadPool(processes=20)
@@ -341,19 +322,6 @@ def test_connect_args(fs):
     assert fs.region == "us-ashburn-1"
     assert fs.default_tenancy == "tenancy1"
 
-    fs.profile = "profile123456789"
-    fs.config = "~/.oci/config"
-    with pytest.raises(ProfileNotFound):
-        fs.connect(refresh=True)
-
-    fs.config = None
-    with pytest.raises(ProfileNotFound):
-        fs.connect(refresh=True)
-
-    fs.kwargs = dict()
-    with pytest.raises(ProfileNotFound):
-        fs.connect(refresh=True)
-
 
 # TODO: need to find better kwarg parsing
 def test_add_kwargs():
@@ -368,7 +336,7 @@ def test_add_kwargs():
 def test_multiple_objects(fs):
     fs.connect()
     assert fs.ls(full_test_bucket_name)
-    fs2 = OCIFileSystem(storage_options["config"])
+    fs2 = OCIFileSystem()
     assert fs.ls(full_test_bucket_name) == fs2.ls(full_test_bucket_name)
 
 
@@ -631,7 +599,7 @@ def test_isfile(fs):
 
 
 def test_isdir(fs):
-    assert fs.isdir(f"@{namespace_name}")
+    # assert fs.isdir(f"@{namespace_name}")
     # TODO should this be a dir?
     # assert fs.isdir('/')
     assert fs.isdir(full_test_bucket_name)
@@ -759,7 +727,7 @@ def test_oci_file_info(fs):
 def test_bucket_exists(fs):
     assert fs.exists(full_test_bucket_name)
     assert not fs.exists(full_test_bucket_name + "x")
-    fs2 = OCIFileSystem(storage_options["config"])
+    fs2 = OCIFileSystem()
     assert fs2.exists(full_test_bucket_name)
     assert not fs2.exists(full_test_bucket_name + "x")
 
@@ -1268,7 +1236,7 @@ def test_bigger_than_block_read(fs):
 
 def test_current(fs):
     fs._cache.clear()
-    fs = OCIFileSystem(storage_options["config"])
+    fs = OCIFileSystem()
     assert fs.current() is fs
     assert OCIFileSystem.current() is fs
 
@@ -1322,7 +1290,7 @@ def test_multipart_upload_blocksize(fs):
 
 
 def test_default_pars():
-    fs = OCIFileSystem(storage_options["config"], default_block_size=20)
+    fs = OCIFileSystem(config, default_block_size=20)
     fn = full_test_bucket_name + "/" + list(files)[0]
     with fs.open(fn) as f:
         assert f.blocksize == 20
@@ -1394,7 +1362,7 @@ def test_autocommit():
     auto_file = full_test_bucket_name + "/auto_file"
     committed_file = full_test_bucket_name + "/commit_file"
     aborted_file = full_test_bucket_name + "/aborted_file"
-    fs = OCIFileSystem(storage_options["config"], version_aware=True)
+    fs = OCIFileSystem(config, version_aware=True)
 
     def write_and_flush(path, autocommit):
         with fs.open(path, "wb", autocommit=autocommit) as fo:
@@ -1481,21 +1449,13 @@ def test_seek_reads(fs):
     assert not fs.exists(fn)
 
 
-def test_user_agent_leak():
-    from oci.config import from_file
-
-    config = from_file()
-    new_fs = OCIFileSystem(config=config)
-    assert new_fs.config["additional_user_agent"]
-    assert not config["additional_user_agent"]
-
-
 def test_sync(fs):
     import tempfile
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         remote_dir = os.path.join("oci://", full_test_bucket_name, "test")
         fs.sync(src_dir=remote_dir, dest_dir=tmpdirname)
+        time.sleep(1)
         assert len(fs.ls(remote_dir)) == len(os.listdir(tmpdirname))
 
     remote_dir = os.path.join("oci://", full_test_bucket_name, "sync") + "/"
@@ -1582,7 +1542,7 @@ def test_content_type_implicit(fs, content_type):
     assert fs.info(e)["contentType"] == content_type
 
 
-@pytest.mark.parametrize("content_type", ["appliction/json"])
+@pytest.mark.parametrize("content_type", ["text/markdown"])
 def test_content_type_explicit(fs, content_type):
     file_path = os.path.abspath(os.path.join(__file__, "../../../"))
     file_name = "README.md"

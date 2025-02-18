@@ -1,5 +1,5 @@
 # coding: utf-8
-# Copyright (c) 2021, 2024 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2025 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 import os
 from ast import literal_eval
@@ -57,6 +57,7 @@ if "OCIFS_LOGGING_LEVEL" in os.environ:
     setup_logging()
 
 IAM_POLICIES = {"api_key", "resource_principal", "instance_principal", "unknown_signer"}
+EU_SOVEREIGN_CLOUD_REGIONS = ["eu-frankfurt-2", "eu-madrid-2"]
 
 
 def get_mount_type(mount_spec):
@@ -276,6 +277,8 @@ class OCIFileSystem(AbstractFileSystem):
                     obj_path,
                     "--src-dir",
                     src_dir,
+                    "--auth",
+                    self._iam_type,
                 ]
             )
         elif self.is_local_path(dest_dir):
@@ -294,6 +297,8 @@ class OCIFileSystem(AbstractFileSystem):
                     obj_path,
                     "--dest-dir",
                     dest_dir,
+                    "--auth",
+                    self._iam_type,
                 ]
             )
         else:
@@ -1086,8 +1091,9 @@ class OCIFileSystem(AbstractFileSystem):
 
     def _update_service_endpoint(self):
         if self.region is not None and "service_endpoint" not in self.config_kwargs:
+            tld = "eu" if self.region in EU_SOVEREIGN_CLOUD_REGIONS else "com"
             self.config_kwargs["service_endpoint"] = (
-                f"https://objectstorage.{self.region}.oraclecloud.com"
+                f"https://objectstorage.{self.region}.oraclecloud.{tld}"
             )
 
     def _get_iam_auth(self):
