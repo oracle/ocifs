@@ -4,7 +4,6 @@
 import errno
 import functools
 
-
 # Fallback values since some systems might not have these.
 EREMOTEIO = getattr(errno, "EREMOTEIO", errno.EIO)
 

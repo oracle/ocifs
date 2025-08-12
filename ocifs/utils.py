@@ -4,7 +4,6 @@
 
 import sys
 
-
 __version__ = "UNKNOWN"
 # https://packaging.python.org/en/latest/guides/single-sourcing-package-version/#single-sourcing-the-package-version
 if sys.version_info >= (3, 8):

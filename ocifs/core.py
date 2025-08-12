@@ -1,42 +1,41 @@
 # coding: utf-8
 # Copyright (c) 2021, 2025 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
-import os
-from ast import literal_eval
 import inspect
 import logging
-from typing import Union  # pragma: no cover
 import mimetypes
+import os
+from ast import literal_eval
+from typing import Union  # pragma: no cover
 
 from fsspec import AbstractFileSystem
-from fsspec.utils import tokenize, stringify_path
 from fsspec.spec import AbstractBufferedFile
-
-from oci.signer import AbstractBaseSigner
+from fsspec.utils import stringify_path, tokenize
+from oci._vendor.requests.structures import CaseInsensitiveDict
 from oci.auth.signers import (
-    get_resource_principals_signer,
     InstancePrincipalsSecurityTokenSigner,
+    get_oke_workload_identity_resource_principal_signer,
+    get_resource_principals_signer,
 )
-from oci.config import DEFAULT_PROFILE, from_file, DEFAULT_LOCATION
-from oci.exceptions import ServiceError, ConfigFileNotFound
-
+from oci.config import DEFAULT_LOCATION, DEFAULT_PROFILE, from_file
+from oci.exceptions import ConfigFileNotFound, ServiceError
 from oci.object_storage.models import (
-    CreateBucketDetails,
     CommitMultipartUploadDetails,
-    CreateMultipartUploadDetails,
     CopyObjectDetails,
+    CreateBucketDetails,
+    CreateMultipartUploadDetails,
 )
 from oci.pagination import list_call_get_all_results
 from oci.retry import DEFAULT_RETRY_STRATEGY
-from oci._vendor.requests.structures import CaseInsensitiveDict
-from .errors import translate_oci_error
+from oci.signer import AbstractBaseSigner
+
 from ocifs.data_lake.lake_sharing_object_storage_client import (
     LakeSharingObjectStorageClient,
 )
 from ocifs.data_lake.rename_object_details import RenameObjectDetails
 
+from .errors import translate_oci_error
 from .utils import __version__
-
 
 logger = logging.getLogger("ocifs")
 
@@ -56,7 +55,7 @@ def setup_logging(level=None):
 if "OCIFS_LOGGING_LEVEL" in os.environ:
     setup_logging()
 
-IAM_POLICIES = {"api_key", "resource_principal", "instance_principal", "unknown_signer"}
+IAM_POLICIES = {"api_key", "resource_principal", "instance_principal", "unknown_signer", "oke_principal"}
 EU_SOVEREIGN_CLOUD_REGIONS = ["eu-frankfurt-2", "eu-madrid-2"]
 
 
@@ -229,7 +228,7 @@ class OCIFileSystem(AbstractFileSystem):
                 self.connect(refresh=True)
                 return method(**additional_kwargs)
             raise e
-
+    
     def sync(self, src_dir, dest_dir, **kwargs):
         """
         The `sync` method is a bulk copy where one location is local and the other is OCI Object Storage.
@@ -251,6 +250,7 @@ class OCIFileSystem(AbstractFileSystem):
             List of all args/kwargs here: https://docs.oracle.com/en-us/iaas/tools/oci-cli/3.22.4/oci_cli_docs/cmdref/os/object/sync.html
         """
         import subprocess
+
         import pkg_resources
 
         assert (
@@ -1129,6 +1129,13 @@ class OCIFileSystem(AbstractFileSystem):
 
     def _set_up_resource_principal(self):
         self.config_kwargs["signer"] = get_resource_principals_signer()
+
+    def _set_up_oke_principal(self):
+        signer = get_oke_workload_identity_resource_principal_signer()
+        self.config_kwargs["signer"] = signer
+        region = os.environ.get("OCI_REGION")
+        if region:
+            self.config.update(region=region)
 
     def _set_up_instance_principal(self):
         self.config_kwargs["signer"] = InstancePrincipalsSecurityTokenSigner()
