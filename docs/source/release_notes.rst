@@ -5,7 +5,7 @@ Release Notes
 .. toctree::
     :maxdepth: 2
 
-1.3.2
+1.3.3
 ------
 Release date: August 15, 2025
 
