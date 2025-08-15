@@ -7,6 +7,12 @@ Release Notes
 
 1.3.2
 ------
+Release date: August 15, 2025
+
+* Added support for authenticating with the OKE signer.
+
+1.3.2
+------
 Release date: February 18, 2025
 
 * Added support for EU Sovereign Cloud
