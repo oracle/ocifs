@@ -5,6 +5,12 @@ Release Notes
 .. toctree::
     :maxdepth: 2
 
+1.3.3
+------
+Release date: August 15, 2025
+
+* Added support for authenticating with the OKE signer.
+
 1.3.2
 ------
 Release date: February 18, 2025
